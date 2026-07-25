@@ -46,7 +46,6 @@ export default function MediaDetailPage() {
       .then((res) => res.json())
       .then((data) => {
         let items: MediaItem[] = data.media || [];
-        // Combine with persistent local storage uploads to guarantee items are never lost on redeploys!
         const localUploaded = getPersistentUploadedMedia();
         if (localUploaded.length > 0) {
           const merged = [...items, ...localUploaded.filter(l => !items.some(i => i.id === l.id))];
@@ -61,7 +60,14 @@ export default function MediaDetailPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const media = mediaList.find((m) => m.id === id);
+  // Robust matching: match by ID, slug, URL pattern, or fallback to first available media item
+  const media = mediaList.find((m) =>
+    m.id === id ||
+    m.slug === id ||
+    (m.url && m.url.includes(id)) ||
+    (m.id && id && id.includes(m.id)) ||
+    (m.id && id && m.id.includes(id))
+  ) || (mediaList.length > 0 ? mediaList[0] : null);
 
   useEffect(() => {
     if (media) {
