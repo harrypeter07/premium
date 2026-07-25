@@ -8,7 +8,7 @@ import { MediaItem } from '@/lib/types';
 import VideoPlayer from '@/components/media/VideoPlayer';
 import MasonryFeed from '@/components/feed/MasonryFeed';
 import {
-  Heart, Bookmark, Share2, Download, Sparkles, ArrowLeft,
+  Heart, Bookmark, Share2, Sparkles, ArrowLeft,
   MessageSquare, Star, Maximize2, X, Send, AlertCircle, Eye, User
 } from 'lucide-react';
 import {
@@ -60,7 +60,6 @@ export default function MediaDetailPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Robust matching: match by ID, slug, URL pattern, or fallback to first available media item
   const media = mediaList.find((m) =>
     m.id === id ||
     m.slug === id ||
@@ -305,17 +304,6 @@ export default function MediaDetailPage() {
                 <Share2 className="w-4 h-4" />
               </button>
             </div>
-
-            <a
-              href={media.url}
-              target="_blank"
-              rel="noreferrer"
-              download
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-brand-purple to-brand-accent text-white font-bold text-xs text-center shadow-neon hover:opacity-90 transition-all flex items-center justify-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              <span>Download Master Resolution</span>
-            </a>
           </div>
         </div>
       </div>

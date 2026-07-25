@@ -26,7 +26,13 @@ async function fetchFromImageKit(): Promise<MediaItem[]> {
     const files = await res.json();
     if (!Array.isArray(files)) return [];
 
-    return files.map((file: any) => {
+    // Filter out stock placeholder images (e.g. default-image.jpg) so ONLY real user uploads show
+    const userFiles = files.filter((file: any) =>
+      file.name !== 'default-image.jpg' &&
+      !file.name.includes('default')
+    );
+
+    return userFiles.map((file: any) => {
       const isVideo = file.fileType === 'non-image' || file.name.endsWith('.mp4') || file.name.endsWith('.webm');
       const title = cleanOrGenerateTitle(file.name);
       const description = cleanOrGenerateDescription('');
@@ -65,8 +71,11 @@ async function fetchFromImageKit(): Promise<MediaItem[]> {
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const { searchParams } = new URL(req.url);
+    const includeCollections = searchParams.get('includeCollections') === 'true';
+
     let dbItems: MediaItem[] = [];
 
     // 1. Try Supabase PostgreSQL Database via Prisma Client
@@ -107,10 +116,10 @@ export async function GET() {
       console.warn('Supabase DB fetch fallback triggered:', dbErr);
     }
 
-    // 2. Fetch directly from ImageKit API (all uploaded files in smr-portfolio)
+    // 2. Fetch directly from ImageKit API
     const imageKitItems = await fetchFromImageKit();
 
-    // 3. Merge database, ImageKit, and in-memory stores seamlessly
+    // 3. Merge stores seamlessly
     const combinedMap = new Map<string, MediaItem>();
 
     [...inMemoryMedia, ...dbItems, ...imageKitItems].forEach((item) => {
@@ -119,7 +128,10 @@ export async function GET() {
       }
     });
 
-    const finalMedia = Array.from(combinedMap.values());
+    let finalMedia = Array.from(combinedMap.values());
+
+    // Exclude stock default images
+    finalMedia = finalMedia.filter(m => !m.url.includes('default-image'));
 
     return NextResponse.json({ media: finalMedia, count: finalMedia.length });
   } catch (err) {
@@ -208,7 +220,6 @@ export async function POST(req: Request) {
           categoryId: categoryRecord.id,
         },
       });
-      console.log('Saved media upload permanently to Supabase Database!');
     } catch (prismaErr) {
       console.warn('Prisma DB insert fallback:', prismaErr);
     }

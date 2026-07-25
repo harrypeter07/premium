@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, Bookmark, Eye, Play, Share2, Trash2 } from 'lucide-react';
 import { MediaItem } from '@/lib/types';
-import { getSavedBookmarks, toggleBookmarkStorage, getSavedLikes, toggleLikeStorage, getPersistentUploadedMedia, savePersistentUploadedMedia } from '@/lib/storage/localStorage';
+import { getSavedBookmarks, toggleBookmarkStorage, getSavedLikes, toggleLikeStorage, getPersistentUploadedMedia } from '@/lib/storage/localStorage';
 import { getCloudflareImageUrl } from '@/lib/media/cloudflare';
 
 interface MediaCardProps {
@@ -22,6 +22,7 @@ export default function MediaCard({ media, onSelect, priority = false }: MediaCa
   const [mounted, setMounted] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
+  const [showHeartBurst, setShowHeartBurst] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -43,6 +44,11 @@ export default function MediaCard({ media, onSelect, priority = false }: MediaCa
     const liked = toggleLikeStorage(media.id);
     setIsLiked(liked);
     setLikesCount(prev => (liked ? prev + 1 : prev - 1));
+
+    if (liked) {
+      setShowHeartBurst(true);
+      setTimeout(() => setShowHeartBurst(false), 900);
+    }
   };
 
   const handleDelete = async (e: React.MouseEvent) => {
@@ -88,6 +94,23 @@ export default function MediaCard({ media, onSelect, priority = false }: MediaCa
       onClick={() => onSelect && onSelect(media)}
       className="masonry-item relative group cursor-pointer rounded-2xl overflow-hidden glass-card border border-white/10 shadow-lg hover:border-violet-500/50 hover:shadow-[0_0_25px_rgba(124,58,237,0.3)] transition-all"
     >
+      {/* Heart Burst Animated Overlay Feedback */}
+      <AnimatePresence>
+        {showHeartBurst && (
+          <motion.div
+            initial={{ scale: 0.2, opacity: 0, y: 0 }}
+            animate={{ scale: 1.4, opacity: 1, y: -40 }}
+            exit={{ scale: 1.8, opacity: 0, y: -70 }}
+            transition={{ duration: 0.7, ease: 'easeOut' }}
+            className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none"
+          >
+            <div className="p-4 rounded-full bg-red-600/30 backdrop-blur-md border border-red-500/50 shadow-[0_0_40px_rgba(239,68,68,0.8)]">
+              <Heart className="w-16 h-16 text-red-500 fill-red-500 drop-shadow-2xl" />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Media Container */}
       <div className="relative w-full overflow-hidden bg-dark-card" style={{ aspectRatio: media.width && media.height ? `${media.width}/${media.height}` : '4/5' }}>
         {media.type === 'VIDEO' && isHovered ? (
@@ -157,9 +180,9 @@ export default function MediaCard({ media, onSelect, priority = false }: MediaCa
               </span>
               <button
                 onClick={handleLike}
-                className="flex items-center gap-1 text-[11px] hover:text-red-400 transition-colors"
+                className="flex items-center gap-1 text-[11px] hover:text-red-400 transition-colors group/like"
               >
-                <Heart className={`w-3.5 h-3.5 ${mounted && isLiked ? 'text-red-400 fill-red-400' : 'text-gray-400'}`} />
+                <Heart className={`w-3.5 h-3.5 transition-transform group-hover/like:scale-125 ${mounted && isLiked ? 'text-red-400 fill-red-400' : 'text-gray-400'}`} />
                 {likesCount.toLocaleString()}
               </button>
             </div>
