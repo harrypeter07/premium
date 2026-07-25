@@ -21,9 +21,9 @@ export async function POST(req: Request) {
         user: { email: ADMIN_USER.email, name: ADMIN_USER.name, role: ADMIN_USER.role },
       });
 
-      // Set HTTP-only cookie for server-side middleware protection
+      // Non-httpOnly so the client JS can also read/write it for sync
       response.cookies.set('smr_admin_session', 'authorized', {
-        httpOnly: true,
+        httpOnly: false,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         maxAge: 60 * 60 * 24, // 24 hours
@@ -33,7 +33,7 @@ export async function POST(req: Request) {
       return response;
     }
 
-    return NextResponse.json({ error: 'Invalid email or password credentials.' }, { status: 401 });
+    return NextResponse.json({ error: 'Invalid email or password.' }, { status: 401 });
   } catch {
     return NextResponse.json({ error: 'Authentication server error' }, { status: 500 });
   }
