@@ -5,17 +5,16 @@ import Link from 'next/link';
 import {
   ShieldCheck, Users, Activity, Upload, ArrowUpRight, Server,
   Lock, Key, LogOut, Film, CheckCircle, AlertCircle, ImageIcon, Video,
-  TrendingUp, Eye
+  Folder, Plus, Trash2, Tag
 } from 'lucide-react';
-import { MediaItem } from '@/lib/types';
+import { MediaItem, CollectionItem } from '@/lib/types';
 import { MEDIA_ITEMS } from '@/lib/data/mockData';
 import { Button } from '@/components/ui/button';
-import { Card, CardTitle, CardDescription, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardTitle, CardDescription, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 
-// Helper: set a cookie client-side so the proxy can read it immediately
 function setClientCookie(name: string, value: string, days = 1) {
   const expires = new Date(Date.now() + days * 864e5).toUTCString();
   document.cookie = `${name}=${value}; expires=${expires}; path=/; SameSite=Lax`;
@@ -32,20 +31,35 @@ export default function AdminDashboardPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  
   const [mediaList, setMediaList] = useState<MediaItem[]>(MEDIA_ITEMS);
+  const [collectionsList, setCollectionsList] = useState<CollectionItem[]>([]);
+
+  // New Collection Form State
+  const [showCreateCollectionModal, setShowCreateCollectionModal] = useState(false);
+  const [colName, setColName] = useState('');
+  const [colDesc, setColDesc] = useState('');
+  const [colCover, setColCover] = useState('');
+  const [colPrice, setColPrice] = useState('FREE');
+  const [colIsFree, setColIsFree] = useState(true);
+  const [colSubmitting, setColSubmitting] = useState(false);
 
   useEffect(() => {
     const authStatus = localStorage.getItem('smr_admin_session');
     if (authStatus === 'authorized') {
-      // Sync cookie in case it expired or wasn't set
       setClientCookie('smr_admin_session', 'authorized');
       setIsAuthenticated(true);
     }
     setAuthChecked(true);
 
-    fetch('/api/media')
-      .then(r => r.json())
-      .then(d => { if (d.media) setMediaList(d.media); })
+    Promise.all([
+      fetch('/api/media').then(r => r.json()),
+      fetch('/api/collections').then(r => r.json()),
+    ])
+      .then(([mediaData, colData]) => {
+        if (mediaData.media) setMediaList(mediaData.media);
+        if (colData.collections) setCollectionsList(colData.collections);
+      })
       .catch(() => {});
   }, []);
 
@@ -61,7 +75,6 @@ export default function AdminDashboardPage() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        // Set both localStorage AND cookie so proxy works immediately
         localStorage.setItem('smr_admin_session', 'authorized');
         localStorage.setItem('smr_admin_user', JSON.stringify(data.user));
         setClientCookie('smr_admin_session', 'authorized');
@@ -84,18 +97,61 @@ export default function AdminDashboardPage() {
     setIsAuthenticated(false);
   };
 
+  const handleCreateCollection = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!colName || !colCover) return;
+    setColSubmitting(true);
+
+    try {
+      const res = await fetch('/api/collections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: colName,
+          description: colDesc,
+          coverImage: colCover,
+          price: colIsFree ? 'FREE' : colPrice,
+          isFree: colIsFree,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setCollectionsList([data.collection, ...collectionsList]);
+        setShowCreateCollectionModal(false);
+        setColName('');
+        setColDesc('');
+        setColCover('');
+        setColPrice('FREE');
+        setColIsFree(true);
+      }
+    } catch (err) {
+      console.error('Failed to create collection:', err);
+    } finally {
+      setColSubmitting(false);
+    }
+  };
+
+  const handleDeleteCollection = async (id: string) => {
+    try {
+      const res = await fetch(`/api/collections?id=${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (res.ok && data.collections) {
+        setCollectionsList(data.collections);
+      }
+    } catch (err) {
+      console.error('Failed to delete collection:', err);
+    }
+  };
+
   const totalArchives = mediaList.length;
   const totalViews = mediaList.reduce((a, m) => a + (m.views || 0), 0);
   const totalLikes = mediaList.reduce((a, m) => a + (m.likes || 0), 0);
-  const totalVideos = mediaList.filter(m => m.type === 'VIDEO').length;
-  const totalPhotos = mediaList.filter(m => m.type === 'IMAGE').length;
 
-  // ── LOGIN SCREEN ──────────────────────────────────────────────────────────
   if (authChecked && !isAuthenticated) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center px-4">
         <div className="w-full max-w-sm space-y-6">
-          {/* Brand */}
           <div className="text-center space-y-2">
             <div className="w-14 h-14 rounded-2xl bg-violet-600/20 border border-violet-500/40 flex items-center justify-center mx-auto">
               <Lock className="w-7 h-7 text-violet-400" />
@@ -104,7 +160,6 @@ export default function AdminDashboardPage() {
             <p className="text-xs text-zinc-500">Smriti Shah Visual Portfolio</p>
           </div>
 
-          {/* Login Card */}
           <Card className="border border-zinc-800">
             <CardContent className="p-6">
               <form onSubmit={handleLogin} className="space-y-4">
@@ -151,19 +206,13 @@ export default function AdminDashboardPage() {
               </form>
             </CardContent>
           </Card>
-
-          <p className="text-center text-[10px] text-zinc-600">
-            Protected by session cookie + localStorage dual auth
-          </p>
         </div>
       </div>
     );
   }
 
-  // ── DASHBOARD ─────────────────────────────────────────────────────────────
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 space-y-6">
-
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 space-y-8">
       {/* Top Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2 pb-4 border-b border-zinc-800">
         <div className="space-y-0.5">
@@ -172,7 +221,7 @@ export default function AdminDashboardPage() {
             <span className="text-xs text-zinc-400 font-medium">Admin Studio</span>
             <Badge variant="outline" className="text-[10px] border-emerald-500/40 text-emerald-400">Live</Badge>
           </div>
-          <h1 className="text-2xl font-black text-white">Dashboard</h1>
+          <h1 className="text-2xl font-black text-white">Dashboard &amp; Content Management</h1>
         </div>
 
         <div className="flex items-center gap-2">
@@ -194,161 +243,142 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border border-zinc-800">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[10px] text-zinc-500 font-medium uppercase tracking-wider">Archives</span>
-              <div className="w-7 h-7 rounded-lg bg-violet-500/15 flex items-center justify-center">
-                <Film className="w-3.5 h-3.5 text-violet-400" />
+      {/* Collection / Occasion Pack CRUD Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <Folder className="w-5 h-5 text-violet-400" />
+              <span>Occasion Collections &amp; Packs ({collectionsList.length})</span>
+            </h2>
+            <p className="text-xs text-zinc-400">Organize photos &amp; videos into packs, set cover pictures and free/VIP prices.</p>
+          </div>
+
+          <Button
+            onClick={() => setShowCreateCollectionModal(true)}
+            size="sm"
+            className="bg-violet-600 hover:bg-violet-500 text-white gap-1.5 h-8 text-xs"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>New Collection Pack</span>
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {collectionsList.map((col) => (
+            <Card key={col.id} className="border border-zinc-800 bg-[#140f21] overflow-hidden flex flex-col justify-between">
+              <div className="relative aspect-[16/9] w-full bg-zinc-900 overflow-hidden">
+                <img src={col.coverImage} alt={col.name} className="w-full h-full object-cover" />
+                <div className="absolute top-2 right-2">
+                  <Badge variant="default" className={col.isFree ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-300'}>
+                    {col.price}
+                  </Badge>
+                </div>
               </div>
-            </div>
-            <p className="text-3xl font-black text-white">{totalArchives}</p>
-            <p className="text-[11px] text-zinc-500 mt-1">{totalPhotos} photos · {totalVideos} videos</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-zinc-800">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[10px] text-zinc-500 font-medium uppercase tracking-wider">Total Views</span>
-              <div className="w-7 h-7 rounded-lg bg-sky-500/15 flex items-center justify-center">
-                <Eye className="w-3.5 h-3.5 text-sky-400" />
-              </div>
-            </div>
-            <p className="text-3xl font-black text-white">{totalViews.toLocaleString()}</p>
-            <p className="text-[11px] text-emerald-400 mt-1">Accumulated</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-zinc-800">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[10px] text-zinc-500 font-medium uppercase tracking-wider">Likes</span>
-              <div className="w-7 h-7 rounded-lg bg-pink-500/15 flex items-center justify-center">
-                <Activity className="w-3.5 h-3.5 text-pink-400" />
-              </div>
-            </div>
-            <p className="text-3xl font-black text-white">{totalLikes.toLocaleString()}</p>
-            <p className="text-[11px] text-zinc-500 mt-1">Community engagement</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-zinc-800 border-emerald-500/20">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[10px] text-zinc-500 font-medium uppercase tracking-wider">AdSense</span>
-              <CheckCircle className="w-4 h-4 text-emerald-400" />
-            </div>
-            <p className="text-xs font-mono text-zinc-300 truncate">ca-pub-4236633699270444</p>
-            <Badge className="mt-2 text-[10px] bg-emerald-500/15 text-emerald-400 border-emerald-500/30" variant="outline">
-              CMP Verified ✓
-            </Badge>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Content Table + Infrastructure */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        {/* Media Table */}
-        <Card className="lg:col-span-2 border border-zinc-800">
-          <CardHeader className="px-5 pt-5 pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-semibold">Published Archives ({totalArchives})</CardTitle>
-              <Link href="/admin/upload">
-                <Button variant="ghost" size="sm" className="h-7 text-[11px] text-violet-400 hover:text-violet-300 gap-1">
-                  + Add New
-                  <ArrowUpRight className="w-3 h-3" />
+              <CardContent className="p-4 space-y-1.5 flex-1">
+                <h3 className="font-bold text-sm text-white">{col.name}</h3>
+                <p className="text-xs text-zinc-400 line-clamp-2">{col.description}</p>
+              </CardContent>
+              <CardFooter className="p-3 border-t border-zinc-800/80 flex items-center justify-between">
+                <span className="text-[10px] font-mono text-zinc-500">ID: {col.id}</span>
+                <Button
+                  onClick={() => handleDeleteCollection(col.id)}
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs text-zinc-400 hover:text-red-400"
+                >
+                  <Trash2 className="w-3.5 h-3.5 mr-1" />
+                  Delete
                 </Button>
-              </Link>
-            </div>
-          </CardHeader>
-
-          {mediaList.length === 0 ? (
-            <CardContent className="px-5 pb-5">
-              <div className="flex flex-col items-center justify-center py-10 text-center border border-dashed border-zinc-700 rounded-xl">
-                <ImageIcon className="w-8 h-8 text-zinc-600 mb-3" />
-                <p className="text-sm font-medium text-zinc-400">No archives published yet</p>
-                <p className="text-xs text-zinc-600 mt-1">Upload your first image or video to get started</p>
-                <Link href="/admin/upload" className="mt-3">
-                  <Button size="sm" className="bg-violet-600 hover:bg-violet-500 text-white gap-1.5">
-                    <Upload className="w-3.5 h-3.5" />
-                    Upload Now
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Views</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mediaList.slice(0, 8).map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded bg-zinc-800 border border-zinc-700 flex items-center justify-center shrink-0 overflow-hidden">
-                          {item.thumbnailUrl ? (
-                            <img src={item.thumbnailUrl} alt="" className="w-full h-full object-cover" />
-                          ) : item.type === 'VIDEO' ? (
-                            <Video className="w-4 h-4 text-zinc-500" />
-                          ) : (
-                            <ImageIcon className="w-4 h-4 text-zinc-500" />
-                          )}
-                        </div>
-                        <span className="text-xs font-medium text-white line-clamp-1 max-w-[140px]">{item.title}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-[10px] font-mono text-zinc-400">{item.type}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-xs text-zinc-300 font-medium">{item.views.toLocaleString()}</span>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-[10px] border-emerald-500/30 text-emerald-400">
-                        {item.visibility || 'PUBLIC'}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </Card>
-
-        {/* Infrastructure Health */}
-        <Card className="border border-zinc-800">
-          <CardHeader className="px-5 pt-5 pb-3">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <Server className="w-4 h-4 text-violet-400" />
-              Infrastructure
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-5 pb-5 space-y-2">
-            {[
-              { label: 'ImageKit CDN', value: 'ik.imagekit.io/epe7dzmjg', status: 'ok' },
-              { label: 'Supabase DB', value: 'Connected', status: 'ok' },
-              { label: 'Shadcn UI', value: 'CLI Installed', status: 'ok' },
-              { label: 'AdSense', value: 'Verified', status: 'ok' },
-              { label: 'Proxy Guard', value: 'Active', status: 'ok' },
-            ].map(row => (
-              <div key={row.label} className="flex items-center justify-between py-2 border-b border-zinc-800 last:border-0">
-                <span className="text-xs text-zinc-400">{row.label}</span>
-                <span className="text-[11px] font-mono text-emerald-400">{row.value}</span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
       </div>
+
+      {/* Published Archives Table */}
+      <Card className="border border-zinc-800">
+        <CardHeader className="px-5 pt-5 pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm font-semibold">Published Media Items ({totalArchives})</CardTitle>
+            <Link href="/admin/upload">
+              <Button variant="ghost" size="sm" className="h-7 text-[11px] text-violet-400 hover:text-violet-300 gap-1">
+                + Upload New
+              </Button>
+            </Link>
+          </div>
+        </CardHeader>
+        <CardContent className="px-5 pb-5">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Title</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {mediaList.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <img src={item.thumbnailUrl} alt="" className="w-8 h-8 rounded object-cover" />
+                      <span className="text-xs font-medium text-white line-clamp-1">{item.title}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-xs font-mono">{item.type}</TableCell>
+                  <TableCell className="text-xs text-zinc-400">{item.category?.name || 'Fashion'}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="text-[10px] border-emerald-500/30 text-emerald-400">
+                      {item.visibility || 'PUBLIC'}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* New Collection Modal */}
+      {showCreateCollectionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <Card className="w-full max-w-md border border-zinc-800 bg-[#140f21] p-6 space-y-4">
+            <CardTitle className="text-lg text-white">Create New Collection Pack</CardTitle>
+            <CardDescription className="text-xs text-zinc-400">Group archives into occasion folders for Explore page.</CardDescription>
+
+            <form onSubmit={handleCreateCollection} className="space-y-3">
+              <div>
+                <label className="text-xs text-zinc-400">Collection Name *</label>
+                <Input required value={colName} onChange={e => setColName(e.target.value)} placeholder="e.g. Diwali Bridal Special" className="h-9 text-xs" />
+              </div>
+              <div>
+                <label className="text-xs text-zinc-400">Cover Image URL *</label>
+                <Input required value={colCover} onChange={e => setColCover(e.target.value)} placeholder="https://..." className="h-9 text-xs" />
+              </div>
+              <div>
+                <label className="text-xs text-zinc-400">Description</label>
+                <Input value={colDesc} onChange={e => setColDesc(e.target.value)} placeholder="Brief pack description..." className="h-9 text-xs" />
+              </div>
+              <div className="flex items-center gap-4 pt-1">
+                <label className="flex items-center gap-2 text-xs text-zinc-300">
+                  <input type="checkbox" checked={colIsFree} onChange={e => setColIsFree(e.target.checked)} className="accent-violet-500" />
+                  Free Pack
+                </label>
+                {!colIsFree && (
+                  <Input value={colPrice} onChange={e => setColPrice(e.target.value)} placeholder="Price e.g. $9.99" className="h-8 text-xs w-32" />
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3">
+                <Button type="button" variant="ghost" size="sm" onClick={() => setShowCreateCollectionModal(false)}>Cancel</Button>
+                <Button type="submit" disabled={colSubmitting} size="sm" className="bg-violet-600 text-white">Save Collection</Button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

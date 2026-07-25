@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { MediaItem } from '@/lib/types';
+import { cleanOrGenerateTitle, cleanOrGenerateDescription } from '@/lib/utils/captionHelper';
 
 // In-memory dynamic store starts completely empty (zero placeholders)
 let dynamicMediaStore: MediaItem[] = [];
@@ -11,21 +12,25 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { title, description, type, url, thumbnailUrl, categorySlug, tags, visibility, isFeatured, isPinned } = body;
+    const { title, description, type, url, thumbnailUrl, categorySlug, collectionId, tags, visibility, isFeatured, isPinned } = body;
 
-    if (!title || !url) {
-      return NextResponse.json({ error: 'Title and URL are required' }, { status: 400 });
+    if (!url) {
+      return NextResponse.json({ error: 'Media URL is required' }, { status: 400 });
     }
+
+    // Clean title & description or fallback to stylish natural captions if raw/blank
+    const finalTitle = cleanOrGenerateTitle(title);
+    const finalDescription = cleanOrGenerateDescription(description);
 
     const newMediaItem: MediaItem = {
       id: `upload-${Date.now()}`,
-      title,
-      slug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-      description: description || 'High-resolution archive uploaded via Studio Admin Panel.',
+      title: finalTitle,
+      slug: finalTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      description: finalDescription,
       type: type || 'IMAGE',
       url,
       thumbnailUrl: thumbnailUrl || url,
-      altText: title,
+      altText: finalTitle,
       width: 1200,
       height: 1600,
       views: 0,
@@ -42,7 +47,8 @@ export async function POST(req: Request) {
         name: categorySlug ? categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1) : 'Fashion',
         slug: categorySlug || 'fashion',
       },
-      tags: tags || ['StudioUpload', 'SmritiShah'],
+      collectionId: collectionId || undefined,
+      tags: tags || ['SmritiShah', 'Editorial'],
     };
 
     if (newMediaItem.isPinned) {

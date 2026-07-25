@@ -20,6 +20,18 @@ export interface MultiResolutions {
   '360p': string;
 }
 
+export interface CollectionItem {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  coverImage: string;
+  price?: string;
+  isFree: boolean;
+  count?: number;
+  createdAt?: string;
+}
+
 export interface MediaItem {
   id: string;
   title: string;
@@ -32,7 +44,7 @@ export interface MediaItem {
   altText: string;
   width: number;
   height: number;
-  duration?: number; // In seconds for videos
+  duration?: number;
   resolutions?: MultiResolutions;
   
   views: number;
@@ -51,6 +63,7 @@ export interface MediaItem {
     name: string;
     slug: string;
   };
+  collectionId?: string;
   tags: string[];
   
   affiliateProducts?: AffiliateProduct[];

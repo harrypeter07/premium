@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Upload, Sparkles, CheckCircle, ArrowLeft, AlertCircle, Loader2, Image as ImageIcon, Video } from 'lucide-react';
+import { Upload, Sparkles, CheckCircle, ArrowLeft, AlertCircle, Loader2, Image as ImageIcon, Video, Folder } from 'lucide-react';
 import { CATEGORIES_LIST } from '@/lib/data/mockData';
+import { CollectionItem } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +24,8 @@ export default function AdminUploadPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [categorySlug, setCategorySlug] = useState('fashion');
+  const [collectionId, setCollectionId] = useState('');
+  const [collectionsList, setCollectionsList] = useState<CollectionItem[]>([]);
   const [mediaType, setMediaType] = useState<MediaType>('IMAGE');
   const [visibility, setVisibility] = useState<Visibility>('PUBLIC');
   const [isFeatured, setIsFeatured] = useState(false);
@@ -38,6 +41,11 @@ export default function AdminUploadPage() {
     const session = localStorage.getItem('smr_admin_session');
     setIsAdmin(session === 'authorized');
     setAuthChecked(true);
+
+    fetch('/api/collections')
+      .then(r => r.json())
+      .then(d => { if (d.collections) setCollectionsList(d.collections); })
+      .catch(() => {});
   }, []);
 
   if (authChecked && !isAdmin) {
@@ -81,7 +89,6 @@ export default function AdminUploadPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedFile) { setErrorMsg('Please select a file first.'); return; }
-    if (!title.trim()) { setErrorMsg('Please enter a title for this archive.'); return; }
 
     setUploading(true);
     setErrorMsg('');
@@ -100,9 +107,7 @@ export default function AdminUploadPage() {
         body: formData,
       });
 
-      console.log('[Upload] ImageKit response status:', uploadRes.status);
       const uploadData = await uploadRes.json();
-      console.log('[Upload] ImageKit response data:', uploadData);
 
       if (!uploadRes.ok) {
         throw new Error(`ImageKit upload failed: ${uploadData.error || uploadRes.statusText}`);
@@ -110,22 +115,21 @@ export default function AdminUploadPage() {
 
       const imageKitUrl = uploadData.url;
       const thumbnailUrl = uploadData.thumbnailUrl || uploadData.url;
-      console.log('[Upload] ImageKit URL:', imageKitUrl);
 
       // STEP 2: Save metadata to feed store
       setUploadStep('Publishing to live feed...');
-      console.log('[Upload] Step 2: Publishing metadata to /api/media');
 
       const metaRes = await fetch('/api/media', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: title.trim(),
-          description: description.trim() || `High-resolution visual archive by Smriti Shah.`,
+          description: description.trim(),
           type: mediaType,
           url: imageKitUrl,
           thumbnailUrl,
           categorySlug,
+          collectionId: collectionId || undefined,
           visibility,
           isFeatured,
           isPinned,
@@ -133,15 +137,12 @@ export default function AdminUploadPage() {
         }),
       });
 
-      console.log('[Upload] Media store response status:', metaRes.status);
       const metaData = await metaRes.json();
-      console.log('[Upload] Media store response data:', metaData);
 
       if (!metaRes.ok) {
         throw new Error(`Failed to publish: ${metaData.error || metaRes.statusText}`);
       }
 
-      console.log('[Upload] SUCCESS! Published item ID:', metaData.media?.id);
       setPublishedItem({ id: metaData.media?.id || '', url: imageKitUrl });
       setSuccess(true);
       setUploadStep('');
@@ -162,6 +163,7 @@ export default function AdminUploadPage() {
     setTitle('');
     setDescription('');
     setCategorySlug('fashion');
+    setCollectionId('');
     setVisibility('PUBLIC');
     setIsFeatured(false);
     setIsPinned(false);
@@ -298,12 +300,11 @@ export default function AdminUploadPage() {
               {/* Row 1: Title + Category */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-medium">Title *</label>
+                  <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-medium">Title (Optional - Auto generated if empty)</label>
                   <Input
-                    required
                     value={title}
                     onChange={e => setTitle(e.target.value)}
-                    placeholder="e.g. Paris Fashion Week Runway"
+                    placeholder="Leave empty for auto-generated caption"
                     className="h-9 text-sm"
                   />
                 </div>
@@ -321,19 +322,37 @@ export default function AdminUploadPage() {
                 </div>
               </div>
 
-              {/* Row 2: Description */}
+              {/* Row 2: Collection / Folder Dropdown */}
               <div className="space-y-1">
-                <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-medium">Description</label>
+                <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-medium flex items-center gap-1">
+                  <Folder className="w-3 h-3 text-violet-400" />
+                  Assign to Collection Folder / Occasion Pack
+                </label>
+                <select
+                  value={collectionId}
+                  onChange={e => setCollectionId(e.target.value)}
+                  className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  <option value="">No Collection (General Feed)</option>
+                  {collectionsList.map(c => (
+                    <option key={c.id} value={c.id}>{c.name} ({c.price})</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Row 3: Description */}
+              <div className="space-y-1">
+                <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-medium">Description (Optional)</label>
                 <textarea
                   rows={2}
                   value={description}
                   onChange={e => setDescription(e.target.value)}
-                  placeholder="Brief description of this archive..."
+                  placeholder="Leave empty for auto-generated editorial story..."
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
                 />
               </div>
 
-              {/* Row 3: Visibility + Flags */}
+              {/* Row 4: Visibility + Flags */}
               <div className="flex flex-wrap items-center gap-4 pt-1">
                 <div className="space-y-1">
                   <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-medium">Visibility</label>
@@ -343,7 +362,7 @@ export default function AdminUploadPage() {
                     className="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                   >
                     <option value="PUBLIC">PUBLIC</option>
-                    <option value="PRIVATE">PRIVATE</option>
+                    <option value="PRIVATE">PRIVATE (VIP Only)</option>
                     <option value="DRAFT">DRAFT</option>
                   </select>
                 </div>
