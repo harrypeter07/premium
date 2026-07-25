@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export function middleware(req: NextRequest) {
+// Next.js 16+ uses 'proxy' export (middleware is deprecated)
+export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Protect all /admin sub-routes — redirect to /admin login if no session cookie
+  // Protect all /admin sub-routes
   if (pathname.startsWith('/admin/')) {
     const adminSession = req.cookies.get('smr_admin_session');
     if (!adminSession || adminSession.value !== 'authorized') {
