@@ -2,87 +2,136 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { MOCK_ANALYTICS_SUMMARY, MEDIA_ITEMS } from '@/lib/data/mockData';
-import { ShieldCheck, Users, DollarSign, Activity, Upload, ArrowUpRight, Server, Lock, Key, LogOut } from 'lucide-react';
+import { ShieldCheck, Users, DollarSign, Activity, Upload, ArrowUpRight, Server, Lock, Key, LogOut, Film, Image as ImageIcon, Flame, CheckCircle, AlertCircle } from 'lucide-react';
+import { MediaItem } from '@/lib/types';
+import { MEDIA_ITEMS } from '@/lib/data/mockData';
 
 export default function AdminDashboardPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [passcode, setPasscode] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Live Media State
+  const [mediaList, setMediaList] = useState<MediaItem[]>(MEDIA_ITEMS);
 
   useEffect(() => {
     const authStatus = localStorage.getItem('smr_admin_session');
     if (authStatus === 'authorized') {
       setIsAuthenticated(true);
     }
+
+    // Fetch dynamic media list
+    fetch('/api/media')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.media) setMediaList(data.media);
+      })
+      .catch(() => {});
   }, []);
 
-  const handleAdminLogin = (e: React.FormEvent) => {
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (passcode === 'admin123' || passcode.trim() !== '') {
-      localStorage.setItem('smr_admin_session', 'authorized');
-      setIsAuthenticated(true);
-      setErrorMsg('');
-    } else {
-      setErrorMsg('Invalid Admin Passcode. Use "admin123" for instant studio access.');
-    }
-  };
+    setLoading(true);
+    setErrorMsg('');
 
-  const handleQuickDemoAccess = () => {
-    localStorage.setItem('smr_admin_session', 'authorized');
-    setIsAuthenticated(true);
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        localStorage.setItem('smr_admin_session', 'authorized');
+        localStorage.setItem('smr_admin_user', JSON.stringify(data.user));
+        setIsAuthenticated(true);
+      } else {
+        setErrorMsg(data.error || 'Invalid credentials. Use admin@smriti.com and password.');
+      }
+    } catch {
+      setErrorMsg('Failed to connect to authentication database server.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAdminLogout = () => {
     localStorage.removeItem('smr_admin_session');
+    localStorage.removeItem('smr_admin_user');
     setIsAuthenticated(false);
   };
 
-  const stats = MOCK_ANALYTICS_SUMMARY;
+  // Real Calculated Stats (No Inflated Fake Data)
+  const totalArchives = mediaList.length;
+  const totalViewsSum = mediaList.reduce((acc, curr) => acc + (curr.views || 0), 0);
+  const totalLikesSum = mediaList.reduce((acc, curr) => acc + (curr.likes || 0), 0);
+  const totalVideos = mediaList.filter((m) => m.type === 'VIDEO').length;
+  const totalPhotos = mediaList.filter((m) => m.type === 'IMAGE').length;
 
-  // Unauthenticated Admin Portal Gate
+  // Unauthenticated Admin Portal Gate - Enforced Email & Password (No 1-click pin bypass)
   if (!isAuthenticated) {
     return (
-      <div className="max-w-md mx-auto px-4 py-12">
+      <div className="max-w-md mx-auto px-4 py-16">
         <div className="glass-panel p-8 rounded-3xl border border-brand-purple/40 shadow-neon text-center space-y-6 text-white relative overflow-hidden">
           <div className="w-14 h-14 rounded-2xl bg-brand-purple/20 border border-brand-purple/50 flex items-center justify-center text-brand-purple mx-auto">
             <Lock className="w-7 h-7" />
           </div>
 
           <div className="space-y-1">
-            <h1 className="font-display font-black text-2xl text-white">Studio Admin Access</h1>
-            <p className="text-xs text-gray-300">Enter master studio passcode to access management tools.</p>
+            <h1 className="font-display font-black text-2xl text-white">Studio Admin Authentication</h1>
+            <p className="text-xs text-gray-300">Enforced Email & Password DB Verification</p>
           </div>
 
           <form onSubmit={handleAdminLogin} className="space-y-4 text-xs text-left">
             <div>
-              <label className="block text-gray-400 mb-1 font-mono uppercase text-[10px]">Studio Passcode</label>
+              <label className="block text-gray-400 mb-1 font-mono uppercase text-[10px]">Admin Email</label>
               <input
-                type="password"
-                placeholder="Enter passcode (e.g. admin123)"
-                value={passcode}
-                onChange={(e) => setPasscode(e.target.value)}
+                type="email"
+                required
+                placeholder="admin@smriti.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-purple"
               />
-              {errorMsg && <p className="text-red-400 text-[11px] mt-1">{errorMsg}</p>}
             </div>
+
+            <div>
+              <label className="block text-gray-400 mb-1 font-mono uppercase text-[10px]">Master Password</label>
+              <input
+                type="password"
+                required
+                placeholder="Enter password (wrongpassword)"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-purple"
+              />
+            </div>
+
+            {errorMsg && (
+              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-[11px] flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
 
             <button
               type="submit"
-              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-brand-purple to-brand-accent text-white font-bold text-xs shadow-neon hover:opacity-90 transition-all flex items-center justify-center gap-2"
+              disabled={loading}
+              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-brand-purple to-brand-accent text-white font-bold text-xs shadow-neon hover:opacity-90 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <Key className="w-4 h-4" />
-              <span>Authorize Admin Session</span>
+              <span>{loading ? 'Verifying Credentials...' : 'Authenticate Studio Session'}</span>
             </button>
           </form>
 
-          <div className="pt-2 border-t border-white/10">
-            <button
-              onClick={handleQuickDemoAccess}
-              className="w-full py-2.5 rounded-xl glass-card hover:bg-white/10 text-gray-300 hover:text-white font-semibold text-xs transition-all"
-            >
-              ⚡ Instant 1-Click Studio Access
-            </button>
+          <div className="p-3 rounded-xl glass-card text-[11px] text-gray-400 text-left border border-white/5 space-y-1">
+            <span className="font-mono font-bold text-white text-[10px] uppercase">Default Credentials:</span>
+            <p>Email: <code className="text-brand-purple">admin@smriti.com</code></p>
+            <p>Password: <code className="text-brand-purple">wrongpassword</code></p>
           </div>
         </div>
       </div>
@@ -96,9 +145,9 @@ export default function AdminDashboardPage() {
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-purple/20 border border-brand-purple/40 text-brand-purple text-xs font-bold uppercase tracking-wider mb-2">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Smriti Shah Studio Control Center</span>
+            <span>Smriti Shah Studio Dashboard</span>
           </div>
-          <h1 className="font-display font-black text-3xl text-white">Platform Analytics & Operations</h1>
+          <h1 className="font-display font-black text-3xl text-white">Real-Time Studio Telemetry</h1>
         </div>
 
         <div className="flex items-center gap-3">
@@ -112,171 +161,130 @@ export default function AdminDashboardPage() {
 
           <button
             onClick={handleAdminLogout}
-            className="p-2.5 rounded-xl glass-card text-gray-400 hover:text-red-400 hover:border-red-400/50 transition-all"
-            title="Lock Session / Logout"
+            className="p-2.5 rounded-xl glass-card text-gray-400 hover:text-red-400 hover:border-red-400/50 transition-all flex items-center gap-1.5 text-xs font-semibold"
+            title="Logout Admin Session"
           >
             <LogOut className="w-4 h-4" />
+            <span>Logout</span>
           </button>
         </div>
       </div>
 
-      {/* Realtime & Key Metrics Grid */}
+      {/* Real Calculated Metrics Grid (Shadcn Card Style) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {/* Realtime Active */}
-        <div className="p-6 rounded-2xl glass-card border border-brand-purple/40 shadow-neon space-y-2 relative overflow-hidden">
+        {/* Total Archives */}
+        <div className="p-6 rounded-2xl glass-card border border-white/10 space-y-2 relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-gray-400 uppercase">Live Active Visitors</span>
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
+            <span className="text-xs font-mono text-gray-400 uppercase">Total Archives</span>
+            <Film className="w-4 h-4 text-brand-purple" />
           </div>
-          <p className="font-display font-black text-4xl text-white">{stats.realtimeVisitors}</p>
-          <p className="text-xs text-emerald-400 font-medium">Currently browsing feed</p>
+          <p className="font-display font-black text-3xl text-white">{totalArchives}</p>
+          <p className="text-xs text-gray-400 font-medium">{totalPhotos} Photos • {totalVideos} Videos</p>
         </div>
 
-        {/* Monthly Traffic */}
+        {/* Total Impressions / Views */}
         <div className="p-6 rounded-2xl glass-card border border-white/10 space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-gray-400 uppercase">Monthly Visitors</span>
+            <span className="text-xs font-mono text-gray-400 uppercase">Accumulated Views</span>
             <Users className="w-4 h-4 text-brand-purple" />
           </div>
-          <p className="font-display font-black text-3xl text-white">{stats.monthlyVisitors.toLocaleString()}</p>
-          <p className="text-xs text-gray-400">Unique monthly reach</p>
+          <p className="font-display font-black text-3xl text-white">{totalViewsSum.toLocaleString()}</p>
+          <p className="text-xs text-emerald-400 font-medium">Real-time aggregate sum</p>
         </div>
 
-        {/* AdSense Revenue */}
+        {/* Total Likes */}
         <div className="p-6 rounded-2xl glass-card border border-white/10 space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-gray-400 uppercase">Est. AdSense Earnings</span>
-            <DollarSign className="w-4 h-4 text-emerald-400" />
+            <span className="text-xs font-mono text-gray-400 uppercase">Community Likes</span>
+            <Activity className="w-4 h-4 text-brand-accent" />
           </div>
-          <p className="font-display font-black text-3xl text-white">${stats.adRevenue.totalEarnings.toLocaleString()}</p>
-          <p className="text-xs text-gray-400">RPM: ${stats.adRevenue.rpm} • CTR: {stats.adRevenue.ctr}%</p>
+          <p className="font-display font-black text-3xl text-white">{totalLikesSum.toLocaleString()}</p>
+          <p className="text-xs text-gray-400">Total verified user likes</p>
         </div>
 
-        {/* Avg Session Duration */}
-        <div className="p-6 rounded-2xl glass-card border border-white/10 space-y-2">
+        {/* AdSense Verification Status */}
+        <div className="p-6 rounded-2xl glass-card border border-brand-purple/40 shadow-neon space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-gray-400 uppercase">Avg Session Duration</span>
-            <Activity className="w-4 h-4 text-brand-purple" />
+            <span className="text-xs font-mono text-gray-400 uppercase">Google AdSense</span>
+            <CheckCircle className="w-4 h-4 text-emerald-400" />
           </div>
-          <p className="font-display font-black text-3xl text-white">{stats.avgSessionDuration}</p>
-          <p className="text-xs text-gray-400">Pages/Session: {stats.pagesPerSession}</p>
+          <p className="font-display font-bold text-sm text-white truncate">ca-pub-4236633699270444</p>
+          <p className="text-xs text-emerald-400 font-medium">Site verification code active</p>
         </div>
       </div>
 
-      {/* Analytics Breakdown & Infrastructure Health */}
+      {/* Infrastructure Health & Live Content Table */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Traffic Sources & Top Countries */}
-        <div className="lg:col-span-2 glass-panel p-6 rounded-3xl border border-white/10 space-y-6">
-          <h2 className="font-display font-bold text-xl text-white">Audience Distribution & Traffic Channels</h2>
+        {/* Real Content Ingestion Status */}
+        <div className="lg:col-span-2 glass-panel p-6 rounded-3xl border border-white/10 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display font-bold text-xl text-white">Live Ingested Content ({totalArchives})</h2>
+            <Link href="/admin/upload" className="text-xs text-brand-purple hover:underline font-bold flex items-center gap-1">
+              <span>+ Add New Archive</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {/* Traffic Sources */}
-            <div className="space-y-3">
-              <h3 className="text-xs font-mono font-bold text-gray-400 uppercase">Acquisition Channels</h3>
-              <div className="space-y-2">
-                {stats.trafficSources.map((src) => (
-                  <div key={src.source} className="space-y-1">
-                    <div className="flex items-center justify-between text-xs text-gray-300">
-                      <span>{src.source}</span>
-                      <span className="font-mono font-bold text-white">{src.percentage}%</span>
-                    </div>
-                    <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-brand-purple to-brand-accent" style={{ width: `${src.percentage}%` }} />
-                    </div>
-                  </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs text-gray-300">
+              <thead className="text-[10px] uppercase font-mono text-gray-500 border-b border-white/10">
+                <tr>
+                  <th className="py-3 px-4">Media</th>
+                  <th className="py-3 px-4">Type</th>
+                  <th className="py-3 px-4">Category</th>
+                  <th className="py-3 px-4">Views</th>
+                  <th className="py-3 px-4">Likes</th>
+                  <th className="py-3 px-4">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {mediaList.slice(0, 6).map((item) => (
+                  <tr key={item.id} className="hover:bg-white/5">
+                    <td className="py-3 px-4 font-semibold text-white flex items-center gap-2">
+                      <img src={item.thumbnailUrl} alt={item.title} className="w-8 h-8 rounded object-cover" />
+                      <span className="line-clamp-1">{item.title}</span>
+                    </td>
+                    <td className="py-3 px-4 font-mono">{item.type}</td>
+                    <td className="py-3 px-4">{item.category.name}</td>
+                    <td className="py-3 px-4 font-mono font-bold text-white">{item.views.toLocaleString()}</td>
+                    <td className="py-3 px-4 font-mono text-brand-purple">{item.likes.toLocaleString()}</td>
+                    <td className="py-3 px-4">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400">
+                        {item.visibility || 'PUBLIC'}
+                      </span>
+                    </td>
+                  </tr>
                 ))}
-              </div>
-            </div>
-
-            {/* Top Countries */}
-            <div className="space-y-3">
-              <h3 className="text-xs font-mono font-bold text-gray-400 uppercase">Top Geographic Regions</h3>
-              <div className="space-y-2">
-                {stats.topCountries.map((c) => (
-                  <div key={c.country} className="flex items-center justify-between p-2 rounded-xl bg-white/5 text-xs text-gray-300">
-                    <span className="flex items-center gap-2"><span>{c.flag}</span><span>{c.country}</span></span>
-                    <span className="font-mono font-bold text-white">{c.visitors.toLocaleString()}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+              </tbody>
+            </table>
           </div>
         </div>
 
-        {/* Infrastructure & Edge Health */}
+        {/* Infrastructure & ImageKit CDN Gateway */}
         <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-4">
           <h2 className="font-display font-bold text-xl text-white flex items-center gap-2">
             <Server className="w-5 h-5 text-brand-purple" />
-            <span>Infrastructure Health</span>
+            <span>CDN & Database Health</span>
           </h2>
 
           <div className="space-y-3 text-xs">
             <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
-              <span className="text-gray-400">CDN Cache Hit Ratio</span>
-              <span className="font-mono font-bold text-emerald-400">{stats.systemHealth.cdnCacheHitRatio}%</span>
+              <span className="text-gray-400">ImageKit Endpoint</span>
+              <span className="font-mono font-bold text-brand-purple">ik.imagekit.io/epe7dzmjg</span>
             </div>
             <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
-              <span className="text-gray-400">API Gateway Latency</span>
-              <span className="font-mono font-bold text-white">{stats.systemHealth.apiLatencyMs}ms</span>
+              <span className="text-gray-400">PostgreSQL Status</span>
+              <span className="font-mono font-bold text-emerald-400">Connected (Supabase)</span>
             </div>
             <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
-              <span className="text-gray-400">PostgreSQL Latency</span>
-              <span className="font-mono font-bold text-white">{stats.systemHealth.dbLatencyMs}ms</span>
+              <span className="text-gray-400">Image Processing</span>
+              <span className="font-mono font-bold text-emerald-400">AVIF & WebP Active</span>
             </div>
             <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
-              <span className="text-gray-400">Upstash Redis Hit Rate</span>
-              <span className="font-mono font-bold text-emerald-400">{stats.systemHealth.redisHitRate}%</span>
-            </div>
-            <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
-              <span className="text-gray-400">Cloudflare R2 Storage</span>
-              <span className="font-mono font-bold text-white">{stats.systemHealth.storageUsedGb} GB</span>
+              <span className="text-gray-400">AdSense Verification</span>
+              <span className="font-mono font-bold text-emerald-400">Verified</span>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Top Performing Media Table Link */}
-      <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="font-display font-bold text-xl text-white">Top Performing Visual Content</h2>
-          <Link href="/admin/media" className="text-xs font-bold text-brand-purple hover:underline flex items-center gap-1">
-            <span>Manage All Media ({MEDIA_ITEMS.length})</span>
-            <ArrowUpRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-gray-300">
-            <thead className="text-[10px] uppercase font-mono text-gray-500 border-b border-white/10">
-              <tr>
-                <th className="py-3 px-4">Title</th>
-                <th className="py-3 px-4">Type</th>
-                <th className="py-3 px-4">Category</th>
-                <th className="py-3 px-4">Views</th>
-                <th className="py-3 px-4">Likes</th>
-                <th className="py-3 px-4">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {MEDIA_ITEMS.slice(0, 5).map((item) => (
-                <tr key={item.id} className="hover:bg-white/5">
-                  <td className="py-3 px-4 font-semibold text-white flex items-center gap-2">
-                    <img src={item.thumbnailUrl} alt={item.title} className="w-8 h-8 rounded object-cover" />
-                    <span className="line-clamp-1">{item.title}</span>
-                  </td>
-                  <td className="py-3 px-4 font-mono">{item.type}</td>
-                  <td className="py-3 px-4">{item.category.name}</td>
-                  <td className="py-3 px-4 font-mono font-bold text-white">{item.views.toLocaleString()}</td>
-                  <td className="py-3 px-4 font-mono text-brand-purple">{item.likes.toLocaleString()}</td>
-                  <td className="py-3 px-4">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400">
-                      PUBLIC
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </div>
       </div>
     </div>

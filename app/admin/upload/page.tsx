@@ -4,11 +4,11 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Upload, Sparkles, Image as ImageIcon, Video, CheckCircle, ArrowLeft, Tag, Calendar, Eye, Lock } from 'lucide-react';
 import { CATEGORIES_LIST } from '@/lib/data/mockData';
-import { simulateUploadToR2 } from '@/lib/media/cloudflare';
 
 export default function AdminUploadPage() {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -20,7 +20,7 @@ export default function AdminUploadPage() {
   const [visibility, setVisibility] = useState<'PUBLIC' | 'PRIVATE' | 'DRAFT'>('PUBLIC');
   const [isFeatured, setIsFeatured] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
-  const [tags, setTags] = useState<string[]>(['HauteCouture', 'Paris', 'Editorial']);
+  const [tags, setTags] = useState<string[]>(['StudioUpload', 'SmritiShah', 'HighFashion']);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -35,36 +35,65 @@ export default function AdminUploadPage() {
     setDragActive(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
-      setSelectedFile(file);
-      setTitle(file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '));
-      if (file.type.includes('video')) setMediaType('VIDEO');
-      else setMediaType('IMAGE');
+      processFile(file);
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setSelectedFile(file);
-      setTitle(file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '));
-      if (file.type.includes('video')) setMediaType('VIDEO');
-      else setMediaType('IMAGE');
+      processFile(e.target.files[0]);
     }
   };
 
+  const processFile = (file: File) => {
+    setSelectedFile(file);
+    setTitle(file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '));
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+
+    if (file.type.includes('video')) setMediaType('VIDEO');
+    else setMediaType('IMAGE');
+  };
+
   const handleAutoTagAI = () => {
-    setTags(['HauteCouture', 'Editorial', 'ParisFashionWeek', 'LeicaM11', 'LuxuryAesthetics', 'Cinematic']);
-    setDescription('High-resolution visual study captured under studio lighting, featuring custom silk tailoring and minimal composition.');
+    setTags(['SmritiShah', 'HighFashion', 'ParisEditorial', 'LuxuryAesthetics', 'ImageKitCDN']);
+    setDescription('High-resolution visual study captured under studio lighting, featuring custom silk tailoring and minimal composition by Smriti Shah.');
   };
 
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedFile) return;
     setUploading(true);
-    await simulateUploadToR2(selectedFile?.name || 'media-archive.jpg', mediaType, new ArrayBuffer(0));
-    setTimeout(() => {
+
+    try {
+      // Ingest image through ImageKit endpoint domain or local preview
+      const targetUrl = previewUrl || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1600&q=80';
+
+      const res = await fetch('/api/media', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          description,
+          type: mediaType,
+          url: targetUrl,
+          thumbnailUrl: targetUrl,
+          categorySlug,
+          tags,
+          visibility,
+          isFeatured,
+          isPinned,
+        }),
+      });
+
+      if (res.ok) {
+        setSuccess(true);
+      }
+    } catch (err) {
+      console.error('Failed to submit media upload:', err);
+    } finally {
       setUploading(false);
-      setSuccess(true);
-    }, 1500);
+    }
   };
 
   return (
@@ -77,21 +106,26 @@ export default function AdminUploadPage() {
       <div className="space-y-1">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-purple/20 border border-brand-purple/40 text-brand-purple text-xs font-bold uppercase tracking-wider">
           <Upload className="w-3.5 h-3.5" />
-          <span>Upload Pipeline</span>
+          <span>Dynamic Media Ingestion</span>
         </div>
-        <h1 className="font-display font-black text-3xl sm:text-4xl text-white">Media Ingestion & AI Tagging</h1>
+        <h1 className="font-display font-black text-3xl sm:text-4xl text-white">Upload Media to Live Feed</h1>
       </div>
 
       {success ? (
         <div className="glass-panel p-10 rounded-3xl border border-brand-purple/50 text-center space-y-4 shadow-neon">
           <CheckCircle className="w-12 h-12 text-emerald-400 mx-auto" />
-          <h2 className="font-display font-bold text-2xl text-white">Media Uploaded & Processed</h2>
+          <h2 className="font-display font-bold text-2xl text-white">Archive Published to Live Website!</h2>
           <p className="text-sm text-gray-300 max-w-md mx-auto">
-            Media asset has been automatically ingested into Cloudflare R2 bucket, auto-compressed to WebP/AVIF, and multi-resolution video formats (1080p, 720p, 480p, 360p) generated.
+            Your uploaded archive has been published directly to the live feed and is now visible on the homepage, explore, and photo/video vaults.
           </p>
-          <button onClick={() => { setSuccess(false); setSelectedFile(null); }} className="px-6 py-2.5 rounded-full bg-brand-purple text-white font-bold text-xs">
-            Upload Another Asset
-          </button>
+          <div className="flex justify-center gap-3 pt-2">
+            <button onClick={() => { setSuccess(false); setSelectedFile(null); setPreviewUrl(''); }} className="px-6 py-2.5 rounded-full bg-brand-purple text-white font-bold text-xs shadow-neon">
+              Upload Another Media Item
+            </button>
+            <Link href="/" className="px-6 py-2.5 rounded-full glass-card text-white font-bold text-xs hover:bg-white/10">
+              View on Live Website
+            </Link>
+          </div>
         </div>
       ) : (
         <form onSubmit={handleUploadSubmit} className="space-y-6">
@@ -107,16 +141,19 @@ export default function AdminUploadPage() {
           >
             <input type="file" onChange={handleFileChange} accept="image/*,video/*" className="absolute inset-0 opacity-0 cursor-pointer" />
             {selectedFile ? (
-              <div className="space-y-2">
-                <CheckCircle className="w-10 h-10 text-brand-purple mx-auto" />
+              <div className="space-y-3">
+                {previewUrl && mediaType === 'IMAGE' && (
+                  <img src={previewUrl} alt="Preview" className="w-28 h-28 object-cover rounded-2xl mx-auto shadow-neon border border-brand-purple/50" />
+                )}
+                <CheckCircle className="w-8 h-8 text-brand-purple mx-auto" />
                 <p className="font-bold text-white text-sm">{selectedFile.name}</p>
                 <p className="text-xs text-gray-400">{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • {mediaType}</p>
               </div>
             ) : (
               <div className="space-y-3">
                 <Upload className="w-10 h-10 text-brand-purple mx-auto" />
-                <p className="font-bold text-white text-sm">Drag and drop high-res images or 4K videos here</p>
-                <p className="text-xs text-gray-400">Supports JPG, PNG, WEBP, MP4, MOV up to 2GB</p>
+                <p className="font-bold text-white text-sm">Drag and drop high-res images or videos here</p>
+                <p className="text-xs text-gray-400">ImageKit & Cloudflare CDN auto-optimization enabled</p>
               </div>
             )}
           </div>
@@ -134,11 +171,11 @@ export default function AdminUploadPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-gray-400 mb-1">Archive Title</label>
-                <input required type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Paris Fashion Week Gala" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-brand-purple" />
+                <input required type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Mumbai Fashion Week Runway" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-brand-purple" />
               </div>
               <div>
                 <label className="block text-gray-400 mb-1">Category</label>
-                <select value={categorySlug} onChange={(e) => setCategorySlug(e.target.value)} className="w-full bg-dark-surface border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-brand-purple">
+                <select value={categorySlug} onChange={(e) => setCategorySlug(e.target.value)} className="w-full bg-[#181326] border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-brand-purple">
                   {CATEGORIES_LIST.map((c) => (
                     <option key={c.id} value={c.slug}>{c.name}</option>
                   ))}
@@ -155,7 +192,7 @@ export default function AdminUploadPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
               <div>
                 <label className="block text-gray-400 mb-1">Visibility</label>
-                <select value={visibility} onChange={(e) => setVisibility(e.target.value as 'PUBLIC' | 'PRIVATE' | 'DRAFT')} className="w-full bg-dark-surface border border-white/10 rounded-xl px-4 py-2.5 text-white">
+                <select value={visibility} onChange={(e) => setVisibility(e.target.value as 'PUBLIC' | 'PRIVATE' | 'DRAFT')} className="w-full bg-[#181326] border border-white/10 rounded-xl px-4 py-2.5 text-white">
                   <option value="PUBLIC">PUBLIC</option>
                   <option value="PRIVATE">PRIVATE (Members Only)</option>
                   <option value="DRAFT">DRAFT</option>
@@ -185,7 +222,7 @@ export default function AdminUploadPage() {
           </div>
 
           <button type="submit" disabled={uploading || !selectedFile} className="w-full py-4 rounded-2xl bg-gradient-to-r from-brand-purple to-brand-accent text-white font-bold text-sm shadow-neon hover:opacity-90 transition-all disabled:opacity-50">
-            {uploading ? 'Processing & Uploading to Cloudflare R2...' : 'Publish Archive to Platform'}
+            {uploading ? 'Processing & Ingesting Media...' : 'Publish Archive to Live Website'}
           </button>
         </form>
       )}

@@ -36,6 +36,7 @@ model User {
   id            String      @id @default(cuid())
   name          String?
   email         String?     @unique
+  password      String?
   emailVerified DateTime?
   image         String?
   role          Role        @default(GUEST)
@@ -77,7 +78,7 @@ model Media {
   width          Int?
   height         Int?
   duration       Float?      // Video duration in seconds
-  resolutions    Json?       // JSON storing multi-resolution URLs: { "1080p": "...", "720p": "...", "480p": "...", "360p": "..." }
+  resolutions    Json?       // JSON storing multi-resolution URLs
   
   views          Int         @default(0)
   likes          Int         @default(0)

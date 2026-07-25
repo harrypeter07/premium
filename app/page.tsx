@@ -1,23 +1,35 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 import { Sparkles, Flame, Crown, Play, ArrowRight, Heart, Eye } from 'lucide-react';
 import { MEDIA_ITEMS, CREATOR_PROFILE } from '@/lib/data/mockData';
 import { getRecommendedFeed } from '@/lib/recommendations';
 import MasonryFeed from '@/components/feed/MasonryFeed';
 import CategoryBar from '@/components/feed/CategoryBar';
 import MembershipModal from '@/components/monetization/MembershipModal';
+import { MediaItem } from '@/lib/types';
 
 export default function HomePage() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [isMembershipOpen, setIsMembershipOpen] = useState(false);
+  const [mediaList, setMediaList] = useState<MediaItem[]>(MEDIA_ITEMS);
 
-  const recommendedItems = getRecommendedFeed(MEDIA_ITEMS, { recentCategorySlugs: [activeCategory] });
-  const featuredItem = MEDIA_ITEMS.find((m) => m.isPinned) || MEDIA_ITEMS[0];
-  const trendingItems = MEDIA_ITEMS.filter((m) => m.isTrending).slice(0, 5);
+  useEffect(() => {
+    fetch('/api/media')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.media && data.media.length > 0) {
+          setMediaList(data.media);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const recommendedItems = getRecommendedFeed(mediaList, { recentCategorySlugs: [activeCategory] });
+  const featuredItem = mediaList.find((m) => m.isPinned) || mediaList[0];
+  const trendingItems = mediaList.filter((m) => m.isTrending).slice(0, 5);
 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 space-y-8">
@@ -63,29 +75,31 @@ export default function HomePage() {
           </div>
 
           {/* Featured Hero Media Card */}
-          <div className="w-full lg:w-72 shrink-0">
-            <Link href={`/media/${featuredItem.id}`} className="block group relative rounded-2xl overflow-hidden glass-card border border-brand-purple/40 shadow-neon">
-              <div className="relative aspect-[3/4] w-full">
-                <Image
-                  src={featuredItem.thumbnailUrl}
-                  alt={featuredItem.title}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#120e1d]/90 via-[#120e1d]/20 to-transparent" />
-                <span className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-brand-purple text-white shadow-md flex items-center gap-1">
-                  <Flame className="w-3 h-3" /> Pinned Feature
-                </span>
-                <div className="absolute bottom-3 left-3 right-3 text-left space-y-1">
-                  <h3 className="font-display font-bold text-xs text-white line-clamp-1">{featuredItem.title}</h3>
-                  <p className="text-[10px] text-gray-300 flex items-center gap-2">
-                    <span className="flex items-center gap-1"><Eye className="w-3 h-3 text-brand-purple" /> {featuredItem.views.toLocaleString()}</span>
-                    <span className="flex items-center gap-1"><Heart className="w-3 h-3 text-brand-accent" /> {featuredItem.likes.toLocaleString()}</span>
-                  </p>
+          {featuredItem && (
+            <div className="w-full lg:w-72 shrink-0">
+              <Link href={`/media/${featuredItem.id}`} className="block group relative rounded-2xl overflow-hidden glass-card border border-brand-purple/40 shadow-neon">
+                <div className="relative aspect-[3/4] w-full">
+                  <Image
+                    src={featuredItem.thumbnailUrl}
+                    alt={featuredItem.title}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#120e1d]/90 via-[#120e1d]/20 to-transparent" />
+                  <span className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-brand-purple text-white shadow-md flex items-center gap-1">
+                    <Flame className="w-3 h-3" /> Pinned Feature
+                  </span>
+                  <div className="absolute bottom-3 left-3 right-3 text-left space-y-1">
+                    <h3 className="font-display font-bold text-xs text-white line-clamp-1">{featuredItem.title}</h3>
+                    <p className="text-[10px] text-gray-300 flex items-center gap-2">
+                      <span className="flex items-center gap-1"><Eye className="w-3 h-3 text-brand-purple" /> {featuredItem.views.toLocaleString()}</span>
+                      <span className="flex items-center gap-1"><Heart className="w-3 h-3 text-brand-accent" /> {featuredItem.likes.toLocaleString()}</span>
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </Link>
-          </div>
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 
