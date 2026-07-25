@@ -119,8 +119,8 @@ export default function AdminDashboardPage() {
             <Button
               type="submit"
               disabled={loading}
-              variant="gradient"
-              className="w-full h-11 text-xs"
+              variant="default"
+              className="w-full h-11 text-xs bg-gradient-to-r from-brand-purple to-brand-accent hover:opacity-90 transition-opacity"
             >
               <Key className="w-4 h-4 mr-2" />
               <span>{loading ? 'Verifying Credentials...' : 'Authenticate Studio Session'}</span>
@@ -151,7 +151,7 @@ export default function AdminDashboardPage() {
 
         <div className="flex items-center gap-3">
           <Link href="/admin/upload">
-            <Button variant="gradient" className="gap-2">
+            <Button variant="default" className="gap-2 bg-gradient-to-r from-brand-purple to-brand-accent hover:opacity-90 transition-opacity">
               <Upload className="w-4 h-4" />
               <span>Upload New Media</span>
             </Button>
@@ -199,7 +199,7 @@ export default function AdminDashboardPage() {
             <CheckCircle className="w-4 h-4 text-emerald-400" />
           </div>
           <p className="font-display font-bold text-sm text-white truncate">ca-pub-4236633699270444</p>
-          <Badge variant="success">Auto-Ads & CMP Verified</Badge>
+          <Badge variant="default" className="border-emerald-500/40 bg-emerald-500/20 text-emerald-400">Auto-Ads & CMP Verified</Badge>
         </Card>
       </div>
 
@@ -237,7 +237,7 @@ export default function AdminDashboardPage() {
                   <TableCell className="font-mono font-bold text-white">{item.views.toLocaleString()}</TableCell>
                   <TableCell className="font-mono text-brand-purple">{item.likes.toLocaleString()}</TableCell>
                   <TableCell>
-                    <Badge variant="success">{item.visibility || 'PUBLIC'}</Badge>
+                    <Badge variant="default" className="border-emerald-500/40 bg-emerald-500/20 text-emerald-400">{item.visibility || 'PUBLIC'}</Badge>
                   </TableCell>
                 </TableRow>
               ))}
@@ -262,11 +262,11 @@ export default function AdminDashboardPage() {
             </div>
             <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
               <span className="text-gray-400">Shadcn Component System</span>
-              <Badge variant="success">CLI Installed</Badge>
+              <Badge variant="default" className="border-emerald-500/40 bg-emerald-500/20 text-emerald-400">CLI Installed</Badge>
             </div>
             <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
               <span className="text-gray-400">AdSense Verification</span>
-              <Badge variant="success">Verified</Badge>
+              <Badge variant="default" className="border-emerald-500/40 bg-emerald-500/20 text-emerald-400">Verified</Badge>
             </div>
           </div>
         </Card>

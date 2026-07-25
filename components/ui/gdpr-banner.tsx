@@ -93,7 +93,7 @@ export default function GDPRConsentBanner() {
             <Button variant="secondary" size="sm" onClick={handleRejectAll} className="text-[11px]">
               Do Not Consent
             </Button>
-            <Button variant="gradient" size="sm" onClick={handleAcceptAll} className="text-[11px]">
+            <Button variant="default" size="sm" onClick={handleAcceptAll} className="text-[11px] bg-gradient-to-r from-brand-purple to-brand-accent hover:opacity-90 transition-all">
               <Check className="w-3.5 h-3.5 mr-1" />
               Consent
             </Button>
@@ -158,7 +158,7 @@ export default function GDPRConsentBanner() {
               <Button variant="ghost" size="sm" onClick={() => setShowManageModal(false)}>
                 Cancel
               </Button>
-              <Button variant="gradient" size="sm" onClick={handleSaveCustomPreferences}>
+              <Button variant="default" size="sm" onClick={handleSaveCustomPreferences} className="bg-gradient-to-r from-brand-purple to-brand-accent hover:opacity-90 transition-all">
                 Save Preferences
               </Button>
             </CardFooter>
