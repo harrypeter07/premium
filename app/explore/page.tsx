@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Compass, Folder, Video, Image as ImageIcon, X, ArrowUpRight, ShieldCheck } from 'lucide-react';
+import { Compass, Folder, Video, Image as ImageIcon, X, ArrowUpRight } from 'lucide-react';
 import { CATEGORIES_LIST } from '@/lib/data/mockData';
 import { MediaItem, CollectionItem } from '@/lib/types';
 import MasonryFeed from '@/components/feed/MasonryFeed';
@@ -19,7 +19,6 @@ export default function ExplorePage() {
   const [collectionTab, setCollectionTab] = useState<'PHOTOS' | 'VIDEOS'>('PHOTOS');
   const [loading, setLoading] = useState(true);
 
-  // Parallel ultra-fast async/await fetching
   useEffect(() => {
     async function loadExploreData() {
       try {
@@ -61,11 +60,11 @@ export default function ExplorePage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
       {/* Header */}
       <div className="text-center max-w-2xl mx-auto space-y-3">
-        <Badge variant="outline" className="gap-2 border-violet-500/40 text-violet-400 py-1 px-3">
+        <Badge variant="outline" className="gap-2 border-violet-500/40 text-violet-400 py-1 px-3 shadow-[0_0_15px_rgba(124,58,237,0.2)]">
           <Compass className="w-3.5 h-3.5" />
           <span>Visual Discovery &amp; Collections</span>
         </Badge>
-        <h1 className="font-display font-black text-3xl sm:text-5xl text-white">
+        <h1 className="font-display font-black text-3xl sm:text-5xl text-white tracking-tight">
           Explore Curated Archives &amp; Packs
         </h1>
         <p className="text-sm text-gray-300">
@@ -89,9 +88,9 @@ export default function ExplorePage() {
               <Card
                 key={col.id}
                 onClick={() => setActiveCollection(col)}
-                className="group cursor-pointer border border-zinc-800 hover:border-violet-500/50 transition-all overflow-hidden bg-[#140f21]"
+                className="group cursor-pointer border border-white/10 hover:border-violet-500/50 shadow-[0_0_15px_rgba(255,255,255,0.03)] hover:shadow-[0_0_25px_rgba(124,58,237,0.3)] transition-all overflow-hidden bg-[#140f21]"
               >
-                <div className="relative aspect-[16/9] w-full bg-zinc-900 overflow-hidden">
+                <div className="relative aspect-[16/9] w-full bg-zinc-900 overflow-hidden border-b border-white/10">
                   <img
                     src={col.coverImage}
                     alt={col.name}
@@ -104,7 +103,7 @@ export default function ExplorePage() {
                   <div className="absolute top-3 right-3">
                     <Badge
                       variant="default"
-                      className={col.isFree ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' : 'bg-amber-500/20 text-amber-300 border-amber-500/40'}
+                      className={col.isFree ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'}
                     >
                       {col.price || (col.isFree ? 'FREE' : 'VIP')}
                     </Badge>
@@ -138,8 +137,8 @@ export default function ExplorePage() {
               onClick={() => setSelectedCategory(cat.slug === selectedCategory ? 'all' : cat.slug)}
               className={`p-3 rounded-xl border text-left transition-all ${
                 selectedCategory === cat.slug
-                  ? 'bg-violet-600/20 border-violet-500 text-white'
-                  : 'bg-zinc-900/50 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700'
+                  ? 'bg-violet-600/20 border-violet-500 text-white shadow-[0_0_15px_rgba(124,58,237,0.3)]'
+                  : 'bg-zinc-900/50 border-white/10 text-zinc-400 hover:text-white hover:border-white/30'
               }`}
             >
               <p className="font-bold text-xs">{cat.name}</p>
@@ -151,7 +150,7 @@ export default function ExplorePage() {
 
       {/* Main Explore Media Feed */}
       <div className="space-y-4 pt-4">
-        <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+        <div className="flex items-center justify-between border-b border-white/10 pb-3">
           <h2 className="font-bold text-xl text-white">
             {selectedCategory === 'all' ? 'All Visual Archives' : `${selectedCategory.toUpperCase()} Feed`}
           </h2>
@@ -172,9 +171,9 @@ export default function ExplorePage() {
       {/* Opened Collection View Modal */}
       {activeCollection && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0d0917]/90 backdrop-blur-xl animate-in fade-in">
-          <Card className="w-full max-w-4xl max-h-[90vh] flex flex-col border border-zinc-800 bg-[#140f21] shadow-2xl overflow-hidden">
+          <Card className="w-full max-w-4xl max-h-[90vh] flex flex-col border border-violet-500/40 shadow-[0_0_35px_rgba(124,58,237,0.3)] bg-[#140f21] overflow-hidden">
             {/* Modal Header */}
-            <div className="p-6 border-b border-zinc-800 flex items-start justify-between gap-4">
+            <div className="p-6 border-b border-white/10 flex items-start justify-between gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <Badge variant="outline" className="border-violet-500/40 text-violet-400 text-[10px]">
@@ -199,7 +198,7 @@ export default function ExplorePage() {
             </div>
 
             {/* Separate Videos vs Photos Tabs */}
-            <div className="px-6 pt-4 border-b border-zinc-800 flex items-center gap-3">
+            <div className="px-6 pt-4 border-b border-white/10 flex items-center gap-3">
               <button
                 onClick={() => setCollectionTab('PHOTOS')}
                 className={`pb-3 text-xs font-bold flex items-center gap-1.5 border-b-2 transition-all ${
@@ -231,7 +230,7 @@ export default function ExplorePage() {
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     {collectionPhotos.map((item) => (
-                      <Link key={item.id} href={`/media/${item.id}`} className="group relative aspect-[3/4] rounded-xl overflow-hidden border border-zinc-800 bg-zinc-900">
+                      <Link key={item.id} href={`/media/${item.id}`} className="group relative aspect-[3/4] rounded-xl overflow-hidden border border-white/10 hover:border-violet-500/50 shadow-[0_0_15px_rgba(255,255,255,0.05)] hover:shadow-[0_0_20px_rgba(124,58,237,0.3)] transition-all bg-zinc-900">
                         <img
                           src={item.thumbnailUrl}
                           alt={item.title}
@@ -257,7 +256,7 @@ export default function ExplorePage() {
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {collectionVideos.map((item) => (
-                      <Link key={item.id} href={`/media/${item.id}`} className="group relative aspect-video rounded-xl overflow-hidden border border-zinc-800 bg-zinc-900">
+                      <Link key={item.id} href={`/media/${item.id}`} className="group relative aspect-video rounded-xl overflow-hidden border border-white/10 hover:border-red-500/50 shadow-[0_0_15px_rgba(255,255,255,0.05)] hover:shadow-[0_0_20px_rgba(239,68,68,0.3)] transition-all bg-zinc-900">
                         <img
                           src={item.thumbnailUrl}
                           alt={item.title}
@@ -270,7 +269,7 @@ export default function ExplorePage() {
                           <p className="text-xs font-semibold text-white line-clamp-1">
                             {cleanOrGenerateTitle(item.title)}
                           </p>
-                          <Badge variant="default" className="text-[9px] bg-violet-600">VIDEO</Badge>
+                          <Badge variant="default" className="text-[9px] bg-red-600 text-white shadow-[0_0_10px_rgba(239,68,68,0.5)]">VIDEO</Badge>
                         </div>
                       </Link>
                     ))}
