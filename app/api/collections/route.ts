@@ -1,42 +1,8 @@
 import { NextResponse } from 'next/server';
 import { CollectionItem } from '@/lib/types';
 
-// Default initial collections/folders for occasions and packs
-let collectionsStore: CollectionItem[] = [
-  {
-    id: 'col-1',
-    name: 'Haute Couture Runway',
-    slug: 'haute-couture-runway',
-    description: 'Exclusive Paris & Mumbai runway highlights and behind-the-scenes fitting moments.',
-    coverImage: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=800&q=80',
-    price: 'FREE',
-    isFree: true,
-    count: 12,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'col-2',
-    name: 'Monsoon Studio Series',
-    slug: 'monsoon-studio-series',
-    description: 'Warm terracotta, silk drapes, and candlelit portrait studies.',
-    coverImage: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80',
-    price: 'FREE',
-    isFree: true,
-    count: 8,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'col-3',
-    name: 'VIP Private Archives',
-    slug: 'vip-private-archives',
-    description: 'Unfiltered 4K video reels, high-res portrait packs, and exclusive collector edits.',
-    coverImage: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80',
-    price: '$9.99 / VIP Pass',
-    isFree: false,
-    count: 24,
-    createdAt: new Date().toISOString(),
-  },
-];
+// Dynamic store starts completely empty (zero mock placeholders/images)
+let collectionsStore: CollectionItem[] = [];
 
 export async function GET() {
   return NextResponse.json({ collections: collectionsStore });
