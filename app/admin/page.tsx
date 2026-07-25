@@ -52,7 +52,7 @@ export default function AdminDashboardPage() {
         localStorage.setItem('smr_admin_user', JSON.stringify(data.user));
         setIsAuthenticated(true);
       } else {
-        setErrorMsg(data.error || 'Invalid credentials. Use admin@smriti.com and password.');
+        setErrorMsg(data.error || 'Invalid credentials. Please verify your email and password.');
       }
     } catch {
       setErrorMsg('Failed to connect to authentication database server.');
@@ -76,7 +76,7 @@ export default function AdminDashboardPage() {
   if (!isAuthenticated) {
     return (
       <div className="max-w-md mx-auto px-4 py-16">
-        <Card className="p-8 border-brand-purple/40 text-center space-y-6">
+        <Card className="p-8 border-brand-purple/40 text-center space-y-6 bg-[#140f21]/95">
           <div className="w-14 h-14 rounded-2xl bg-brand-purple/20 border border-brand-purple/50 flex items-center justify-center text-brand-purple mx-auto">
             <Lock className="w-7 h-7" />
           </div>
@@ -103,7 +103,7 @@ export default function AdminDashboardPage() {
               <Input
                 type="password"
                 required
-                placeholder="Enter password (wrongpassword)"
+                placeholder="Enter password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -126,12 +126,6 @@ export default function AdminDashboardPage() {
               <span>{loading ? 'Verifying Credentials...' : 'Authenticate Studio Session'}</span>
             </Button>
           </form>
-
-          <div className="p-3 rounded-xl bg-white/5 text-[11px] text-gray-400 text-left border border-white/5 space-y-1">
-            <span className="font-mono font-bold text-white text-[10px] uppercase">Database Admin Account:</span>
-            <p>Email: <code className="text-brand-purple">admin@smriti.com</code></p>
-            <p>Password: <code className="text-brand-purple">wrongpassword</code></p>
-          </div>
         </Card>
       </div>
     );
