@@ -113,7 +113,6 @@ export default function AdminDashboardPage() {
     setColSubmitting(true);
 
     try {
-      // 1. Upload Cover Image to ImageKit CDN directly
       setColUploadStep('Uploading cover image to ImageKit CDN...');
       const formData = new FormData();
       formData.append('file', colCoverFile);
@@ -131,7 +130,6 @@ export default function AdminDashboardPage() {
 
       const coverImageUrl = uploadData.url;
 
-      // 2. Create Collection with uploaded ImageKit CDN URL
       setColUploadStep('Saving collection folder...');
       const res = await fetch('/api/collections', {
         method: 'POST',
@@ -294,34 +292,52 @@ export default function AdminDashboardPage() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Full-Bleed Cover Image Cards Grid with Dynamic Aspect Ratio */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {collectionsList.map((col) => (
-            <Card key={col.id} className="border border-white/10 hover:border-violet-500/50 shadow-[0_0_15px_rgba(255,255,255,0.03)] hover:shadow-[0_0_25px_rgba(124,58,237,0.25)] transition-all bg-[#140f21] overflow-hidden flex flex-col justify-between">
-              <div className="relative aspect-[16/9] w-full bg-zinc-900 overflow-hidden border-b border-white/10">
-                <img src={col.coverImage} alt={col.name} className="w-full h-full object-cover" />
-                <div className="absolute top-2 right-2">
-                  <Badge variant="default" className={col.isFree ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'}>
-                    {col.price}
-                  </Badge>
+            <div
+              key={col.id}
+              className="relative group rounded-2xl overflow-hidden border border-white/10 hover:border-violet-500/50 shadow-[0_0_20px_rgba(255,255,255,0.04)] hover:shadow-[0_0_30px_rgba(124,58,237,0.3)] transition-all bg-zinc-900 min-h-[340px] flex flex-col justify-end p-5"
+            >
+              {/* Full Card Cover Image */}
+              <img
+                src={col.coverImage}
+                alt={col.name}
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+              />
+
+              {/* Full Card Gradient Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0d0917] via-[#0d0917]/65 to-transparent" />
+
+              {/* Top Price Badge */}
+              <div className="absolute top-3 right-3 z-10">
+                <Badge
+                  variant="default"
+                  className={col.isFree ? 'bg-emerald-500/80 text-white backdrop-blur-md border border-emerald-400/50 shadow-md font-bold' : 'bg-amber-500/80 text-white backdrop-blur-md border border-amber-400/50 shadow-md font-bold'}
+                >
+                  {col.price}
+                </Badge>
+              </div>
+
+              {/* Bottom Details Overlay */}
+              <div className="relative z-10 space-y-2">
+                <h3 className="font-black text-lg text-white group-hover:text-violet-300 transition-colors drop-shadow-md">{col.name}</h3>
+                <p className="text-xs text-zinc-300 line-clamp-2 leading-relaxed drop-shadow">{col.description}</p>
+
+                <div className="flex items-center justify-between pt-3 border-t border-white/15">
+                  <span className="text-[10px] font-mono text-zinc-400">ID: {col.id}</span>
+                  <Button
+                    onClick={() => handleDeleteCollection(col.id)}
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs text-red-300 hover:text-red-100 bg-red-500/20 hover:bg-red-500/40 border border-red-500/50 shadow-sm"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 mr-1" />
+                    Delete
+                  </Button>
                 </div>
               </div>
-              <CardContent className="p-4 space-y-1.5 flex-1">
-                <h3 className="font-bold text-sm text-white">{col.name}</h3>
-                <p className="text-xs text-zinc-400 line-clamp-2">{col.description}</p>
-              </CardContent>
-              <CardFooter className="p-3 border-t border-white/10 flex items-center justify-between">
-                <span className="text-[10px] font-mono text-zinc-500">ID: {col.id}</span>
-                <Button
-                  onClick={() => handleDeleteCollection(col.id)}
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 text-xs text-zinc-400 hover:text-red-400 border border-red-500/20 hover:border-red-500/60"
-                >
-                  <Trash2 className="w-3.5 h-3.5 mr-1" />
-                  Delete
-                </Button>
-              </CardFooter>
-            </Card>
+            </div>
           ))}
         </div>
       </div>
@@ -371,7 +387,7 @@ export default function AdminDashboardPage() {
         </CardContent>
       </Card>
 
-      {/* New Collection Upload Modal — Direct Image Upload File Picker */}
+      {/* New Collection Upload Modal */}
       {showCreateCollectionModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl animate-in fade-in">
           <Card className="w-full max-w-md border border-violet-500/40 shadow-[0_0_35px_rgba(124,58,237,0.3)] bg-[#140f21] p-6 space-y-4">
@@ -397,7 +413,7 @@ export default function AdminDashboardPage() {
                   />
                   {colCoverPreview ? (
                     <div className="space-y-2">
-                      <img src={colCoverPreview} alt="Cover Preview" className="w-full h-32 object-cover rounded-xl border border-violet-500/50 shadow-[0_0_15px_rgba(124,58,237,0.3)]" />
+                      <img src={colCoverPreview} alt="Cover Preview" className="w-full h-36 object-cover rounded-xl border border-violet-500/50 shadow-[0_0_15px_rgba(124,58,237,0.3)]" />
                       <p className="text-[11px] text-emerald-400 font-semibold">Cover image selected · Click to replace</p>
                     </div>
                   ) : (

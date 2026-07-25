@@ -72,7 +72,7 @@ export default function ExplorePage() {
         </p>
       </div>
 
-      {/* Occasion / Collection Folders Section — Render ONLY if collections.length > 0 */}
+      {/* Occasion / Collection Folders Section */}
       {collections.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -83,45 +83,48 @@ export default function ExplorePage() {
             <span className="text-xs text-zinc-500 font-mono">{collections.length} Folders</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {collections.map((col) => (
-              <Card
+              <div
                 key={col.id}
                 onClick={() => setActiveCollection(col)}
-                className="group cursor-pointer border border-white/10 hover:border-violet-500/50 shadow-[0_0_15px_rgba(255,255,255,0.03)] hover:shadow-[0_0_25px_rgba(124,58,237,0.3)] transition-all overflow-hidden bg-[#140f21]"
+                className="group cursor-pointer relative rounded-2xl overflow-hidden border border-white/10 hover:border-violet-500/50 shadow-[0_0_20px_rgba(255,255,255,0.04)] hover:shadow-[0_0_30px_rgba(124,58,237,0.3)] transition-all bg-zinc-900 min-h-[320px] flex flex-col justify-end p-5"
               >
-                <div className="relative aspect-[16/9] w-full bg-zinc-900 overflow-hidden border-b border-white/10">
-                  <img
-                    src={col.coverImage}
-                    alt={col.name}
-                    loading="lazy"
-                    decoding="async"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#140f21] via-transparent to-transparent" />
+                {/* Full Card Cover Image */}
+                <img
+                  src={col.coverImage}
+                  alt={col.name}
+                  loading="lazy"
+                  decoding="async"
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                />
 
-                  <div className="absolute top-3 right-3">
-                    <Badge
-                      variant="default"
-                      className={col.isFree ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'}
-                    >
-                      {col.price || (col.isFree ? 'FREE' : 'VIP')}
-                    </Badge>
-                  </div>
+                {/* Full Card Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0d0917] via-[#0d0917]/65 to-transparent" />
+
+                {/* Price Badge */}
+                <div className="absolute top-3 right-3 z-10">
+                  <Badge
+                    variant="default"
+                    className={col.isFree ? 'bg-emerald-500/80 text-white backdrop-blur-md border border-emerald-400/50 shadow-md font-bold' : 'bg-amber-500/80 text-white backdrop-blur-md border border-amber-400/50 shadow-md font-bold'}
+                  >
+                    {col.price || (col.isFree ? 'FREE' : 'VIP')}
+                  </Badge>
                 </div>
 
-                <CardContent className="p-4 space-y-1.5">
+                {/* Content Overlay */}
+                <div className="relative z-10 space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-sm text-white group-hover:text-violet-300 transition-colors">
+                    <h3 className="font-black text-lg text-white group-hover:text-violet-300 transition-colors drop-shadow-md">
                       {col.name}
                     </h3>
-                    <ArrowUpRight className="w-4 h-4 text-zinc-500 group-hover:text-violet-400" />
+                    <ArrowUpRight className="w-5 h-5 text-zinc-400 group-hover:text-violet-400 transition-colors" />
                   </div>
-                  <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed">
+                  <p className="text-xs text-zinc-300 line-clamp-2 leading-relaxed drop-shadow">
                     {col.description}
                   </p>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ))}
           </div>
         </div>
