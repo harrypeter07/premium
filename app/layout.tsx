@@ -22,10 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#120e1d" />
 
-        {/* Google AdSense Site Verification Meta Tag (Fetched dynamically from NEXT_PUBLIC_ADSENSE_PUB_ID) */}
-        <meta name="google-adsense-account" content={adsensePubId} />
-
-        {/* Google AdSense Script Snippet (Fetched dynamically from NEXT_PUBLIC_ADSENSE_PUB_ID) */}
+        {/* Official Google AdSense Script Snippet (Fetched dynamically from NEXT_PUBLIC_ADSENSE_PUB_ID) */}
         <Script
           async
           src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsensePubId}`}
