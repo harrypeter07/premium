@@ -4,32 +4,71 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { MEDIA_ITEMS } from '@/lib/data/mockData';
+import { MediaItem } from '@/lib/types';
 import VideoPlayer from '@/components/media/VideoPlayer';
 import MasonryFeed from '@/components/feed/MasonryFeed';
-import { Heart, Bookmark, Eye, Share2, Download, Sparkles, ArrowLeft, ExternalLink, MessageCircle } from 'lucide-react';
+import { Heart, Bookmark, Share2, Download, Sparkles, ArrowLeft, ExternalLink, AlertCircle } from 'lucide-react';
 import { getSavedBookmarks, toggleBookmarkStorage, getSavedLikes, toggleLikeStorage, addToWatchHistory } from '@/lib/storage/localStorage';
 import { generateMediaJsonLd } from '@/lib/seo';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { cleanOrGenerateTitle, cleanOrGenerateDescription } from '@/lib/utils/captionHelper';
 
 export default function MediaDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params?.id as string;
 
-  const media = MEDIA_ITEMS.find((m) => m.id === id) || MEDIA_ITEMS[0];
+  const [mediaList, setMediaList] = useState<MediaItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [isLiked, setIsLiked] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
-  const [likesCount, setLikesCount] = useState(media.likes);
+  const [likesCount, setLikesCount] = useState(0);
+
+  useEffect(() => {
+    fetch('/api/media')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.media) setMediaList(data.media);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const media = mediaList.find((m) => m.id === id);
 
   useEffect(() => {
     if (media) {
       setIsBookmarked(getSavedBookmarks().includes(media.id));
       setIsLiked(getSavedLikes().includes(media.id));
-      setLikesCount(media.likes);
+      setLikesCount(media.likes || 0);
       addToWatchHistory(media.id);
     }
   }, [media]);
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-20 text-center font-mono text-xs text-zinc-500">
+        Loading visual archive...
+      </div>
+    );
+  }
+
+  if (!media) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-20 text-center space-y-4">
+        <Card className="p-8 border border-zinc-800 bg-[#140f21]">
+          <AlertCircle className="w-10 h-10 text-violet-400 mx-auto mb-3" />
+          <h2 className="text-lg font-bold text-white">Archive Not Found</h2>
+          <p className="text-xs text-zinc-400">The requested media item does not exist or has been removed.</p>
+          <Link href="/" className="block mt-4">
+            <Button size="sm" className="bg-violet-600 hover:bg-violet-500 text-white">Return to Feed</Button>
+          </Link>
+        </Card>
+      </div>
+    );
+  }
 
   const handleBookmark = () => {
     const saved = toggleBookmarkStorage(media.id);
@@ -56,6 +95,8 @@ export default function MediaDetailPage() {
   };
 
   const jsonLdData = generateMediaJsonLd(media);
+  const displayTitle = cleanOrGenerateTitle(media.title);
+  const displayDescription = cleanOrGenerateDescription(media.description);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
@@ -78,14 +119,14 @@ export default function MediaDetailPage() {
             <VideoPlayer
               url={media.url}
               thumbnailUrl={media.thumbnailUrl}
-              title={media.title}
+              title={displayTitle}
               mediaId={media.id}
               resolutions={media.resolutions}
               autoPlay={true}
             />
           ) : (
             <div className="relative w-full aspect-[4/5] rounded-3xl overflow-hidden glass-card border border-white/10 shadow-2xl">
-              <Image src={media.url} alt={media.altText || media.title} fill className="object-cover" priority />
+              <img src={media.url} alt={displayTitle} className="w-full h-full object-cover" />
             </div>
           )}
 
@@ -93,19 +134,19 @@ export default function MediaDetailPage() {
           <div className="glass-panel p-8 rounded-3xl border border-white/10 space-y-4">
             <div className="flex items-center justify-between">
               <span className="px-3 py-1 rounded-full text-xs font-bold bg-brand-purple/20 border border-brand-purple/40 text-brand-purple">
-                {media.category.name}
+                {media.category?.name || 'Fashion'}
               </span>
               <span className="text-xs text-gray-400 font-mono">
-                Published {new Date(media.publishedAt).toLocaleDateString()}
+                Published {new Date(media.publishedAt || Date.now()).toLocaleDateString()}
               </span>
             </div>
 
-            <h1 className="font-display font-bold text-2xl sm:text-3xl text-white">{media.title}</h1>
-            <p className="text-sm text-gray-300 leading-relaxed">{media.description}</p>
+            <h1 className="font-display font-bold text-2xl sm:text-3xl text-white">{displayTitle}</h1>
+            <p className="text-sm text-gray-300 leading-relaxed">{displayDescription}</p>
 
             {/* Tags */}
             <div className="flex flex-wrap gap-2 pt-2">
-              {media.tags.map((tag) => (
+              {(media.tags || ['SmritiShah']).map((tag) => (
                 <span key={tag} className="text-xs text-gray-400 glass-card px-3 py-1 rounded-lg">
                   #{tag}
                 </span>
@@ -133,32 +174,6 @@ export default function MediaDetailPage() {
               </button>
             </div>
 
-            {/* Affiliate Showcase */}
-            {media.affiliateProducts && media.affiliateProducts.length > 0 && (
-              <div className="space-y-3 pt-4 border-t border-white/10">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5 text-brand-purple" />
-                  <span>Featured Runway Apparel</span>
-                </h3>
-                {media.affiliateProducts.map((prod) => (
-                  <a
-                    key={prod.id}
-                    href={prod.affiliateUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-3 p-3 rounded-xl glass-card hover:border-brand-purple/50 transition-all group"
-                  >
-                    <img src={prod.imageUrl} alt={prod.title} className="w-12 h-12 rounded-lg object-cover" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-white truncate">{prod.title}</p>
-                      <p className="text-[11px] text-gray-400">{prod.brand} • <span className="text-brand-purple font-bold">{prod.price}</span></p>
-                    </div>
-                    <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-white" />
-                  </a>
-                ))}
-              </div>
-            )}
-
             <a
               href={media.url}
               target="_blank"
@@ -174,10 +189,12 @@ export default function MediaDetailPage() {
       </div>
 
       {/* Recommended Related Archives */}
-      <div className="space-y-6 pt-8 border-t border-white/10">
-        <h2 className="font-display font-bold text-2xl text-white">More From {media.category.name}</h2>
-        <MasonryFeed items={MEDIA_ITEMS.filter((m) => m.id !== media.id && m.category.slug === media.category.slug)} />
-      </div>
+      {mediaList.length > 1 && (
+        <div className="space-y-6 pt-8 border-t border-white/10">
+          <h2 className="font-display font-bold text-2xl text-white">More Archives</h2>
+          <MasonryFeed items={mediaList.filter((m) => m.id !== media.id)} />
+        </div>
+      )}
     </div>
   );
 }
