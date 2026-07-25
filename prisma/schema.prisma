@@ -1,0 +1,202 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MODERATOR
+  EDITOR
+  GUEST
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+enum Visibility {
+  PUBLIC
+  PRIVATE
+  DRAFT
+}
+
+enum AdType {
+  BANNER
+  NATIVE
+  STICKY
+  VIDEO
+}
+
+model User {
+  id            String      @id @default(cuid())
+  name          String?
+  email         String?     @unique
+  emailVerified DateTime?
+  image         String?
+  role          Role        @default(GUEST)
+  bookmarks     Bookmark[]
+  history       History[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  coverImage  String?
+  media       Media[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Tag {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  slug      String     @unique
+  mediaTags MediaTag[]
+  createdAt DateTime   @default(now())
+}
+
+model Media {
+  id             String      @id @default(cuid())
+  title          String
+  slug           String      @unique
+  description    String?
+  type           MediaType
+  url            String
+  thumbnailUrl   String
+  blurDataUrl    String?
+  altText        String?
+  width          Int?
+  height         Int?
+  duration       Float?      // Video duration in seconds
+  resolutions    Json?       // JSON storing multi-resolution URLs: { "1080p": "...", "720p": "...", "480p": "...", "360p": "..." }
+  
+  views          Int         @default(0)
+  likes          Int         @default(0)
+  bookmarksCount Int         @default(0)
+  sharesCount    Int         @default(0)
+  
+  isFeatured     Boolean     @default(false)
+  isTrending     Boolean     @default(false)
+  isPinned       Boolean     @default(false)
+  visibility     Visibility  @default(PUBLIC)
+  publishedAt    DateTime?
+  
+  categoryId     String
+  category       Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  mediaTags      MediaTag[]
+  bookmarks      Bookmark[]
+  history        History[]
+  sponsorships   Sponsorship[]
+  analytics      AnalyticsEvent[]
+
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([type])
+  @@index([categoryId])
+  @@index([isFeatured, isTrending, isPinned])
+}
+
+model MediaTag {
+  mediaId String
+  tagId   String
+  media   Media  @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  tag     Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([mediaId, tagId])
+}
+
+model Bookmark {
+  id         String   @id @default(cuid())
+  userId     String?
+  guestToken String?
+  mediaId    String
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  media      Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([guestToken])
+}
+
+model History {
+  id             String   @id @default(cuid())
+  userId         String?
+  guestToken     String?
+  mediaId        String
+  watchedSeconds Float    @default(0)
+  completionRate Float    @default(0)
+  user           User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  media          Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  viewedAt       DateTime @default(now())
+
+  @@index([userId])
+  @@index([guestToken])
+}
+
+model AnalyticsEvent {
+  id          String   @id @default(cuid())
+  type        String
+  path        String
+  referrer    String?
+  country     String?
+  city        String?
+  device      String?
+  browser     String?
+  os          String?
+  duration    Float?
+  scrollDepth Float?
+  mediaId     String?
+  media       Media?   @relation(fields: [mediaId], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+
+  @@index([type])
+  @@index([createdAt])
+}
+
+model DailyAggregate {
+  id          String   @id @default(cuid())
+  date        DateTime @unique
+  visitors    Int      @default(0)
+  pageViews   Int      @default(0)
+  avgDuration Float    @default(0)
+  bounceRate  Float    @default(0)
+  adEarnings  Float    @default(0)
+  rpm         Float    @default(0)
+  ctr         Float    @default(0)
+  cpc         Float    @default(0)
+  createdAt   DateTime @default(now())
+}
+
+model Sponsorship {
+  id         String   @id @default(cuid())
+  title      String
+  brandName  String
+  logoUrl    String?
+  linkUrl    String
+  dealAmount Float?
+  status     String   @default("ACTIVE")
+  mediaId    String?
+  media      Media?   @relation(fields: [mediaId], references: [id], onDelete: SetNull)
+  createdAt  DateTime @default(now())
+}
+
+model AdPlacement {
+  id              String   @id @default(cuid())
+  slotId          String   @unique
+  type            AdType   @default(BANNER)
+  position        String
+  isActive        Boolean  @default(true)
+  impressionCount Int      @default(0)
+  clickCount      Int      @default(0)
+  createdAt       DateTime @default(now())
+}
