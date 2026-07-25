@@ -12,26 +12,14 @@ import { getPersistentCollections } from '@/lib/storage/localStorage';
 
 export default function CollectionsPage() {
   const [collections, setCollections] = useState<CollectionItem[]>([]);
-  const [mediaList, setMediaList] = useState<MediaItem[]>([]);
-  const [activeCollection, setActiveCollection] = useState<CollectionItem | null>(null);
-  const [collectionTab, setCollectionTab] = useState<'PHOTOS' | 'VIDEOS'>('PHOTOS');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
       try {
         setLoading(true);
-        const [mediaRes, colRes] = await Promise.all([
-          fetch('/api/media', { cache: 'no-store' }),
-          fetch('/api/collections', { cache: 'no-store' }),
-        ]);
-
-        const [mediaData, colData] = await Promise.all([
-          mediaRes.json(),
-          colRes.json(),
-        ]);
-
-        if (mediaData.media) setMediaList(mediaData.media);
+        const colRes = await fetch('/api/collections', { cache: 'no-store' });
+        const colData = await colRes.json();
 
         let cols: CollectionItem[] = colData.collections || [];
         const localCols = getPersistentCollections();
@@ -51,13 +39,6 @@ export default function CollectionsPage() {
 
     loadData();
   }, []);
-
-  const collectionItems = activeCollection
-    ? mediaList.filter((m) => m.collectionId === activeCollection.id)
-    : [];
-
-  const collectionPhotos = collectionItems.filter((m) => m.type === 'IMAGE');
-  const collectionVideos = collectionItems.filter((m) => m.type === 'VIDEO');
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 pb-16">
@@ -87,12 +68,13 @@ export default function CollectionsPage() {
           </Link>
         </Card>
       ) : (
+        /* Longer Vertical Aspect Ratio Cards Grid */
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {collections.map((col) => (
-            <div
+            <Link
               key={col.id}
-              onClick={() => setActiveCollection(col)}
-              className="group cursor-pointer relative rounded-2xl overflow-hidden border border-white/10 hover:border-violet-500/50 shadow-[0_0_20px_rgba(255,255,255,0.04)] hover:shadow-[0_0_30px_rgba(124,58,237,0.3)] transition-all bg-zinc-900 min-h-[350px] flex flex-col justify-end p-6"
+              href={`/collections/${col.id}`}
+              className="group relative rounded-3xl overflow-hidden border border-white/10 hover:border-violet-500/60 shadow-xl hover:shadow-[0_0_35px_rgba(124,58,237,0.35)] transition-all bg-zinc-950 min-h-[420px] aspect-[3/4] flex flex-col justify-end p-6"
             >
               {/* Full Card Cover Image */}
               <img
@@ -104,7 +86,7 @@ export default function CollectionsPage() {
               />
 
               {/* Full Card Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0d0917] via-[#0d0917]/65 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0d0917] via-[#0d0917]/60 to-transparent" />
 
               {/* Top Price Badge */}
               <div className="absolute top-4 right-4 z-10">
@@ -127,126 +109,13 @@ export default function CollectionsPage() {
                 <p className="text-xs text-zinc-300 line-clamp-2 leading-relaxed drop-shadow">
                   {col.description}
                 </p>
-                <div className="pt-2 text-[11px] text-violet-400 font-semibold flex items-center gap-1">
-                  <span>View Photos &amp; Videos in Collection</span>
-                  <ArrowUpRight className="w-3 h-3" />
+                <div className="pt-2 text-[11px] text-violet-400 font-bold flex items-center gap-1">
+                  <span>Open Collection Folder</span>
+                  <ArrowUpRight className="w-3.5 h-3.5" />
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
-        </div>
-      )}
-
-      {/* Opened Collection View Modal */}
-      {activeCollection && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0d0917]/90 backdrop-blur-xl animate-in fade-in">
-          <Card className="w-full max-w-4xl max-h-[90vh] flex flex-col border border-violet-500/40 shadow-[0_0_35px_rgba(124,58,237,0.3)] bg-[#140f21] overflow-hidden">
-            {/* Modal Header */}
-            <div className="p-6 border-b border-white/10 flex items-start justify-between gap-4">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="border-violet-500/40 text-violet-400 text-[10px]">
-                    Collection Pack
-                  </Badge>
-                  <Badge variant="default" className={activeCollection.isFree ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-300'}>
-                    {activeCollection.price}
-                  </Badge>
-                </div>
-                <h2 className="text-xl font-bold text-white">{activeCollection.name}</h2>
-                <p className="text-xs text-zinc-400 max-w-xl">{activeCollection.description}</p>
-              </div>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setActiveCollection(null)}
-                className="text-zinc-400 hover:text-white"
-              >
-                <X className="w-5 h-5" />
-              </Button>
-            </div>
-
-            {/* Separate Videos vs Photos Tabs */}
-            <div className="px-6 pt-4 border-b border-white/10 flex items-center gap-3">
-              <button
-                onClick={() => setCollectionTab('PHOTOS')}
-                className={`pb-3 text-xs font-bold flex items-center gap-1.5 border-b-2 transition-all ${
-                  collectionTab === 'PHOTOS' ? 'border-violet-500 text-white' : 'border-transparent text-zinc-500 hover:text-zinc-300'
-                }`}
-              >
-                <ImageIcon className="w-4 h-4" />
-                <span>Photos ({collectionPhotos.length})</span>
-              </button>
-
-              <button
-                onClick={() => setCollectionTab('VIDEOS')}
-                className={`pb-3 text-xs font-bold flex items-center gap-1.5 border-b-2 transition-all ${
-                  collectionTab === 'VIDEOS' ? 'border-violet-500 text-white' : 'border-transparent text-zinc-500 hover:text-zinc-300'
-                }`}
-              >
-                <Video className="w-4 h-4" />
-                <span>Videos ({collectionVideos.length})</span>
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
-              {collectionTab === 'PHOTOS' ? (
-                collectionPhotos.length === 0 ? (
-                  <div className="py-16 text-center text-xs text-zinc-500 font-mono">
-                    No photo items in this collection yet.
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    {collectionPhotos.map((item) => (
-                      <Link key={item.id} href={`/media/${item.id}`} className="group relative aspect-[3/4] rounded-xl overflow-hidden border border-white/10 hover:border-violet-500/50 shadow-[0_0_15px_rgba(255,255,255,0.05)] hover:shadow-[0_0_20px_rgba(124,58,237,0.3)] transition-all bg-zinc-900">
-                        <img
-                          src={item.thumbnailUrl}
-                          alt={item.title}
-                          loading="lazy"
-                          decoding="async"
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90" />
-                        <div className="absolute bottom-2 left-2 right-2">
-                          <p className="text-xs font-semibold text-white line-clamp-1">
-                            {cleanOrGenerateTitle(item.title)}
-                          </p>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                )
-              ) : (
-                collectionVideos.length === 0 ? (
-                  <div className="py-16 text-center text-xs text-zinc-500 font-mono">
-                    No video items in this collection yet.
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {collectionVideos.map((item) => (
-                      <Link key={item.id} href={`/media/${item.id}`} className="group relative aspect-video rounded-xl overflow-hidden border border-white/10 hover:border-red-500/50 shadow-[0_0_15px_rgba(255,255,255,0.05)] hover:shadow-[0_0_20px_rgba(239,68,68,0.3)] transition-all bg-zinc-900">
-                        <img
-                          src={item.thumbnailUrl}
-                          alt={item.title}
-                          loading="lazy"
-                          decoding="async"
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90" />
-                        <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
-                          <p className="text-xs font-semibold text-white line-clamp-1">
-                            {cleanOrGenerateTitle(item.title)}
-                          </p>
-                          <Badge variant="default" className="text-[9px] bg-red-600 text-white shadow-[0_0_10px_rgba(239,68,68,0.5)]">VIDEO</Badge>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                )
-              )}
-            </div>
-          </Card>
         </div>
       )}
     </div>

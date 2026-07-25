@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { savePersistentUploadedMedia } from '@/lib/storage/localStorage';
+import { savePersistentUploadedMedia, getPersistentCollections } from '@/lib/storage/localStorage';
 
 type MediaType = 'IMAGE' | 'VIDEO';
 type Visibility = 'PUBLIC' | 'PRIVATE' | 'DRAFT';
@@ -45,8 +45,19 @@ export default function AdminUploadPage() {
 
     fetch('/api/collections')
       .then(r => r.json())
-      .then(d => { if (d.collections) setCollectionsList(d.collections); })
-      .catch(() => {});
+      .then(d => {
+        let cols: CollectionItem[] = d.collections || [];
+        const localCols = getPersistentCollections();
+        if (localCols.length > 0) {
+          const merged = [...cols, ...localCols.filter(lc => !cols.some(c => c.id === lc.id))];
+          cols = merged;
+        }
+        setCollectionsList(cols);
+      })
+      .catch(() => {
+        const localCols = getPersistentCollections();
+        if (localCols.length > 0) setCollectionsList(localCols);
+      });
   }, []);
 
   if (authChecked && !isAdmin) {
@@ -168,7 +179,6 @@ export default function AdminUploadPage() {
         setPublishedCount(i + 1);
       }
 
-      // Save to client persistent storage so uploaded items are NEVER lost!
       if (uploadedResults.length > 0) {
         savePersistentUploadedMedia(uploadedResults);
       }
@@ -223,7 +233,6 @@ export default function AdminUploadPage() {
       </div>
 
       {success ? (
-        /* ─── Success State ─── */
         <Card className="p-0 border border-emerald-500/30 bg-emerald-500/5 overflow-hidden">
           <div className="p-6 text-center space-y-3">
             <div className="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center mx-auto">
@@ -247,7 +256,6 @@ export default function AdminUploadPage() {
         </Card>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* ─── Publish button at TOP ─── */}
           <div className="flex items-center justify-between gap-3 p-3 rounded-xl border border-zinc-700/60 bg-zinc-900/50">
             <div className="text-xs text-zinc-400">
               {selectedFiles.length > 0 ? (
@@ -272,7 +280,6 @@ export default function AdminUploadPage() {
             </Button>
           </div>
 
-          {/* Error */}
           {errorMsg && (
             <div className="flex items-start gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -280,7 +287,6 @@ export default function AdminUploadPage() {
             </div>
           )}
 
-          {/* ─── Multi-File Drop Zone ─── */}
           <div
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
@@ -319,10 +325,8 @@ export default function AdminUploadPage() {
             )}
           </div>
 
-          {/* ─── Compact Metadata Form ─── */}
           <Card className="border border-zinc-800">
             <CardContent className="p-4 space-y-3">
-              {/* Row 1: Title + Category */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-medium">
@@ -349,7 +353,7 @@ export default function AdminUploadPage() {
                 </div>
               </div>
 
-              {/* Row 2: Collection / Folder Dropdown */}
+              {/* Assign to Collection Dropdown populated with created collections */}
               <div className="space-y-1">
                 <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-medium flex items-center gap-1">
                   <Folder className="w-3 h-3 text-violet-400" />
@@ -367,7 +371,6 @@ export default function AdminUploadPage() {
                 </select>
               </div>
 
-              {/* Row 3: Description */}
               <div className="space-y-1">
                 <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-medium">Description (Optional)</label>
                 <textarea
@@ -379,7 +382,6 @@ export default function AdminUploadPage() {
                 />
               </div>
 
-              {/* Row 4: Visibility + Flags */}
               <div className="flex flex-wrap items-center gap-4 pt-1">
                 <div className="space-y-1">
                   <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-medium">Visibility</label>
