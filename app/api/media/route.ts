@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
-import { MEDIA_ITEMS } from '@/lib/data/mockData';
 import { MediaItem } from '@/lib/types';
 
-// In-memory dynamic store combining uploaded assets with mock items
-let dynamicMediaStore: MediaItem[] = [...MEDIA_ITEMS];
+// In-memory dynamic store starts completely empty (zero placeholders)
+let dynamicMediaStore: MediaItem[] = [];
 
 export async function GET() {
   return NextResponse.json({ media: dynamicMediaStore, count: dynamicMediaStore.length });
@@ -29,7 +28,7 @@ export async function POST(req: Request) {
       altText: title,
       width: 1200,
       height: 1600,
-      views: 1,
+      views: 0,
       likes: 0,
       bookmarksCount: 0,
       sharesCount: 0,
@@ -46,7 +45,6 @@ export async function POST(req: Request) {
       tags: tags || ['StudioUpload', 'SmritiShah'],
     };
 
-    // Unpin other items if this new upload is pinned
     if (newMediaItem.isPinned) {
       dynamicMediaStore = dynamicMediaStore.map(item => ({ ...item, isPinned: false }));
     }

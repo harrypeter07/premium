@@ -1,30 +1,34 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
-import { Sparkles, Flame, Crown, Play, ArrowRight, Heart, Eye } from 'lucide-react';
-import { MEDIA_ITEMS, CREATOR_PROFILE } from '@/lib/data/mockData';
+import { Sparkles, Flame, Crown, ArrowRight, ShieldCheck, Film, Image as ImageIcon } from 'lucide-react';
+import { CREATOR_PROFILE } from '@/lib/data/mockData';
 import { getRecommendedFeed } from '@/lib/recommendations';
 import MasonryFeed from '@/components/feed/MasonryFeed';
 import CategoryBar from '@/components/feed/CategoryBar';
 import MembershipModal from '@/components/monetization/MembershipModal';
 import { MediaItem } from '@/lib/types';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 export default function HomePage() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [isMembershipOpen, setIsMembershipOpen] = useState(false);
-  const [mediaList, setMediaList] = useState<MediaItem[]>(MEDIA_ITEMS);
+  const [mediaList, setMediaList] = useState<MediaItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch('/api/media')
       .then((res) => res.json())
       .then((data) => {
-        if (data.media && data.media.length > 0) {
+        if (data.media) {
           setMediaList(data.media);
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   const recommendedItems = getRecommendedFeed(mediaList, { recentCategorySlugs: [activeCategory] });
@@ -33,8 +37,8 @@ export default function HomePage() {
 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 space-y-8">
-      {/* Creator Hero Showcase Banner - Compact Padding & Rich Deep Violet */}
-      <div className="relative rounded-3xl overflow-hidden glass-panel border border-white/10 p-5 sm:p-8 shadow-2xl bg-gradient-to-r from-[#140f21] via-[#1a142c] to-[#140f21]">
+      {/* Creator Hero Showcase Banner */}
+      <div className="relative rounded-3xl overflow-hidden border border-white/10 p-5 sm:p-8 shadow-2xl bg-gradient-to-r from-[#140f21] via-[#1a142c] to-[#140f21]">
         {/* Decorative Background Glows */}
         <div className="absolute -top-24 -left-24 w-96 h-96 bg-brand-purple/20 blur-[120px] pointer-events-none" />
         <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-brand-accent/20 blur-[120px] pointer-events-none" />
@@ -42,10 +46,10 @@ export default function HomePage() {
         <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6">
           {/* Creator Details */}
           <div className="space-y-3 max-w-2xl text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-card border border-brand-purple/40 text-brand-purple text-xs font-bold uppercase tracking-wider">
+            <Badge variant="default" className="gap-2">
               <Sparkles className="w-3.5 h-3.5" />
               <span>Official Visual Portfolio</span>
-            </div>
+            </Badge>
 
             <h1 className="font-display font-black text-2xl sm:text-4xl lg:text-5xl text-white tracking-tight leading-tight">
               Aesthetics, Haute Couture & <span className="gradient-text">Cinematic Stories.</span>
@@ -56,34 +60,33 @@ export default function HomePage() {
             </p>
 
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 pt-1">
-              <button
+              <Button
                 onClick={() => setIsMembershipOpen(true)}
-                className="px-5 py-2.5 rounded-full bg-gradient-to-r from-brand-purple to-brand-accent text-white font-bold text-xs shadow-neon hover:opacity-90 transition-all flex items-center gap-2"
+                variant="default"
+                className="bg-gradient-to-r from-brand-purple to-brand-accent hover:opacity-90 transition-opacity gap-2"
               >
                 <Crown className="w-3.5 h-3.5" />
                 <span>Join VIP Pass</span>
-              </button>
+              </Button>
 
-              <Link
-                href="/creator"
-                className="px-5 py-2.5 rounded-full glass-card hover:bg-white/10 text-white font-semibold text-xs transition-all flex items-center gap-1.5"
-              >
-                <span>About Smriti Shah</span>
-                <ArrowRight className="w-3.5 h-3.5 text-brand-purple" />
+              <Link href="/creator">
+                <Button variant="outline" className="gap-1.5">
+                  <span>About Smriti Shah</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-brand-purple" />
+                </Button>
               </Link>
             </div>
           </div>
 
-          {/* Featured Hero Media Card */}
+          {/* Featured Hero Media Card (Render only if media list is not empty) */}
           {featuredItem && (
             <div className="w-full lg:w-72 shrink-0">
-              <Link href={`/media/${featuredItem.id}`} className="block group relative rounded-2xl overflow-hidden glass-card border border-brand-purple/40 shadow-neon">
+              <Link href={`/media/${featuredItem.id}`} className="block group relative rounded-2xl overflow-hidden border border-brand-purple/40 shadow-neon">
                 <div className="relative aspect-[3/4] w-full">
-                  <Image
+                  <img
                     src={featuredItem.thumbnailUrl}
                     alt={featuredItem.title}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-700"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#120e1d]/90 via-[#120e1d]/20 to-transparent" />
                   <span className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-brand-purple text-white shadow-md flex items-center gap-1">
@@ -91,10 +94,6 @@ export default function HomePage() {
                   </span>
                   <div className="absolute bottom-3 left-3 right-3 text-left space-y-1">
                     <h3 className="font-display font-bold text-xs text-white line-clamp-1">{featuredItem.title}</h3>
-                    <p className="text-[10px] text-gray-300 flex items-center gap-2">
-                      <span className="flex items-center gap-1"><Eye className="w-3 h-3 text-brand-purple" /> {featuredItem.views.toLocaleString()}</span>
-                      <span className="flex items-center gap-1"><Heart className="w-3 h-3 text-brand-accent" /> {featuredItem.likes.toLocaleString()}</span>
-                    </p>
                   </div>
                 </div>
               </Link>
@@ -111,57 +110,77 @@ export default function HomePage() {
         />
       </div>
 
-      {/* Trending Carousel Section */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Flame className="w-4 h-4 text-brand-accent" />
-            <h2 className="font-display font-bold text-lg text-white">Trending Archives</h2>
-          </div>
-          <Link href="/trending" className="text-xs font-semibold text-brand-purple hover:underline flex items-center gap-1">
-            <span>View All</span>
-            <ArrowRight className="w-3 h-3" />
-          </Link>
+      {/* Empty State / Uploaded Media Grid */}
+      {loading ? (
+        <div className="py-20 text-center text-gray-400 text-xs font-mono">
+          Loading editorial archives...
         </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          {trendingItems.map((item) => (
-            <Link
-              key={item.id}
-              href={`/media/${item.id}`}
-              className="group relative rounded-2xl overflow-hidden glass-card border border-white/10 hover:border-brand-purple/50 transition-all"
-            >
-              <div className="relative aspect-[4/5] w-full">
-                <Image
-                  src={item.thumbnailUrl}
-                  alt={item.title}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#120e1d]/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                {item.type === 'VIDEO' && (
-                  <span className="absolute top-2 right-2 p-1.5 rounded-full bg-[#120e1d]/80 text-white backdrop-blur">
-                    <Play className="w-3 h-3 fill-white" />
-                  </span>
-                )}
-                <div className="absolute bottom-2 left-2 right-2">
-                  <p className="text-xs font-semibold text-white line-clamp-1">{item.title}</p>
+      ) : mediaList.length === 0 ? (
+        /* Empty State Card - Shadcn Style */
+        <Card className="max-w-md mx-auto p-8 border-dashed border-white/20 text-center space-y-4 bg-[#140f21]/80">
+          <div className="w-12 h-12 rounded-full bg-brand-purple/10 border border-brand-purple/20 flex items-center justify-center text-brand-purple mx-auto">
+            <Film className="w-6 h-6" />
+          </div>
+          <div className="space-y-1">
+            <CardTitle className="text-lg">No Archives Published Yet</CardTitle>
+            <CardDescription className="text-xs">
+              This visual portfolio is ready. Log in to the Admin Studio dashboard to upload your first high-fashion editorial.
+            </CardDescription>
+          </div>
+          <Link href="/admin">
+            <Button variant="outline" size="sm" className="mt-2 gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-brand-purple" />
+              <span>Access Studio Login</span>
+            </Button>
+          </Link>
+        </Card>
+      ) : (
+        <>
+          {/* Trending Carousel Section (Only render if trending items exist) */}
+          {trendingItems.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Flame className="w-4 h-4 text-brand-accent" />
+                  <h2 className="font-display font-bold text-lg text-white">Trending Archives</h2>
                 </div>
               </div>
-            </Link>
-          ))}
-        </div>
-      </div>
 
-      {/* Main Recommendation Feed Section */}
-      <div className="space-y-4 pt-2">
-        <div className="flex items-center justify-between">
-          <h2 className="font-display font-bold text-xl text-white">Recommended For You</h2>
-          <span className="text-xs text-gray-400 font-mono text-[11px]">AI Feed Scoring</span>
-        </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                {trendingItems.map((item) => (
+                  <Link
+                    key={item.id}
+                    href={`/media/${item.id}`}
+                    className="group relative rounded-2xl overflow-hidden border border-white/10 hover:border-brand-purple/50 transition-all bg-[#181326]"
+                  >
+                    <div className="relative aspect-[4/5] w-full">
+                      <img
+                        src={item.thumbnailUrl}
+                        alt={item.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#120e1d]/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="absolute bottom-2 left-2 right-2">
+                        <p className="text-xs font-semibold text-white line-clamp-1">{item.title}</p>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
 
-        <MasonryFeed items={recommendedItems} />
-      </div>
+          {/* Main Recommendation Feed Section */}
+          <div className="space-y-4 pt-2">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display font-bold text-xl text-white">Recommended For You</h2>
+              <span className="text-xs text-gray-400 font-mono text-[11px]">AI Feed Scoring</span>
+            </div>
+
+            <MasonryFeed items={recommendedItems} />
+          </div>
+        </>
+      )}
 
       {/* Membership Pass Modal */}
       <MembershipModal isOpen={isMembershipOpen} onClose={() => setIsMembershipOpen(false)} />

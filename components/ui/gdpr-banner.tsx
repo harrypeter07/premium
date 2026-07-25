@@ -122,7 +122,7 @@ export default function GDPRConsentBanner() {
                   <h4 className="font-bold text-white">Strictly Necessary Cookies</h4>
                   <p className="text-[10px] text-gray-400">Required for media streaming, security, and site functionality.</p>
                 </div>
-                <Badge variant="success">Always Active</Badge>
+                <Badge variant="default" className="border-emerald-500/40 bg-emerald-500/20 text-emerald-400">Always Active</Badge>
               </div>
 
               {/* Analytics */}
