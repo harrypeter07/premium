@@ -11,6 +11,8 @@ import './globals.css';
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
+  const adsensePubId = process.env.NEXT_PUBLIC_ADSENSE_PUB_ID || 'ca-pub-4236633699270444';
+
   return (
     <html lang="en" className="dark scroll-smooth">
       <head>
@@ -20,10 +22,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#120e1d" />
 
-        {/* Google AdSense Site Verification Script */}
+        {/* Google AdSense Site Verification Meta Tag (Fetched dynamically from NEXT_PUBLIC_ADSENSE_PUB_ID) */}
+        <meta name="google-adsense-account" content={adsensePubId} />
+
+        {/* Google AdSense Script Snippet (Fetched dynamically from NEXT_PUBLIC_ADSENSE_PUB_ID) */}
         <Script
           async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4236633699270444"
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsensePubId}`}
           crossOrigin="anonymous"
           strategy="afterInteractive"
         />
@@ -32,7 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Navigation Bar */}
         <Navbar onOpenSearch={() => setIsSearchOpen(true)} />
 
-        {/* Main Content Stage with Compact Padding */}
+        {/* Main Content Stage */}
         <main className="flex-1 pt-16 sm:pt-20 pb-8">
           {children}
         </main>
