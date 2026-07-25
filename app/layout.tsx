@@ -2,8 +2,9 @@ import React from 'react';
 import type { Metadata, Viewport } from 'next';
 import Navbar from '@/components/ui/Navbar';
 import Footer from '@/components/ui/Footer';
-import SearchModal from '@/components/ui/SearchModal';
 import AdSenseSlot from '@/components/monetization/AdSenseSlot';
+import GDPRConsentBanner from '@/components/ui/gdpr-banner';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -33,19 +34,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="bg-[#120e1d] text-gray-100 min-h-screen flex flex-col antialiased selection:bg-brand-purple selection:text-white">
-        {/* Navigation Bar */}
-        <Navbar />
+        <TooltipProvider>
+          {/* Navigation Bar */}
+          <Navbar />
 
-        {/* Main Content Stage */}
-        <main className="flex-1 pt-16 sm:pt-20 pb-8">
-          {children}
-        </main>
+          {/* Main Content Stage */}
+          <main className="flex-1 pt-16 sm:pt-20 pb-8">
+            {children}
+          </main>
 
-        {/* Sticky Mobile Anchor Ad */}
-        <AdSenseSlot type="STICKY_ANCHOR" />
+          {/* Sticky Mobile Anchor Ad */}
+          <AdSenseSlot type="STICKY_ANCHOR" />
 
-        {/* Footer */}
-        <Footer />
+          {/* GDPR Cookie Consent Banner */}
+          <GDPRConsentBanner />
+
+          {/* Footer */}
+          <Footer />
+        </TooltipProvider>
       </body>
     </html>
   );
