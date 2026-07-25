@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Upload, Sparkles, CheckCircle, ArrowLeft } from 'lucide-react';
+import { Upload, Sparkles, CheckCircle, ArrowLeft, AlertCircle } from 'lucide-react';
 import { CATEGORIES_LIST } from '@/lib/data/mockData';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -15,6 +15,7 @@ export default function AdminUploadPage() {
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   // Metadata Form State
   const [title, setTitle] = useState('');
@@ -68,10 +69,28 @@ export default function AdminUploadPage() {
     e.preventDefault();
     if (!selectedFile) return;
     setUploading(true);
+    setErrorMsg('');
 
     try {
-      const targetUrl = previewUrl || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1600&q=80';
+      // 1. Upload file to ImageKit via API upload route
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', selectedFile);
 
+      const uploadRes = await fetch('/api/media/upload', {
+        method: 'POST',
+        body: uploadFormData,
+      });
+
+      const uploadData = await uploadRes.json();
+
+      if (!uploadRes.ok) {
+        throw new Error(uploadData.error || 'Failed to upload image to ImageKit CDN storage.');
+      }
+
+      const imageKitUrl = uploadData.url;
+      const thumbnailKitUrl = uploadData.thumbnailUrl;
+
+      // 2. Ingest the permanent ImageKit URL into the database
       const res = await fetch('/api/media', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -79,8 +98,8 @@ export default function AdminUploadPage() {
           title,
           description,
           type: mediaType,
-          url: targetUrl,
-          thumbnailUrl: targetUrl,
+          url: imageKitUrl,
+          thumbnailUrl: thumbnailKitUrl,
           categorySlug,
           tags,
           visibility,
@@ -91,9 +110,13 @@ export default function AdminUploadPage() {
 
       if (res.ok) {
         setSuccess(true);
+      } else {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to publish media metadata.');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Failed to submit media upload:', err);
+      setErrorMsg(err instanceof Error ? err.message : 'An unexpected error occurred during upload.');
     } finally {
       setUploading(false);
     }
@@ -121,7 +144,7 @@ export default function AdminUploadPage() {
           <CheckCircle className="w-12 h-12 text-emerald-400 mx-auto" />
           <CardTitle className="text-2xl">Archive Published to Live Website!</CardTitle>
           <CardDescription className="text-sm max-w-md mx-auto text-gray-300">
-            Your uploaded archive has been published directly to the live feed and is now visible on the homepage, explore, and photo/video vaults.
+            Your uploaded archive has been successfully hosted on ImageKit and published directly to the live feed.
           </CardDescription>
           <div className="flex justify-center gap-3 pt-2">
             <Button onClick={() => { setSuccess(false); setSelectedFile(null); setPreviewUrl(''); }} variant="default" className="bg-gradient-to-r from-brand-purple to-brand-accent hover:opacity-90 transition-opacity">
@@ -160,12 +183,12 @@ export default function AdminUploadPage() {
               <div className="space-y-3">
                 <Upload className="w-10 h-10 text-brand-purple mx-auto" />
                 <p className="font-bold text-white text-sm">Drag and drop high-res images or videos here</p>
-                <p className="text-xs text-gray-400">ImageKit & Cloudflare CDN auto-optimization enabled</p>
+                <p className="text-xs text-gray-400">ImageKit CDN auto-optimization enabled</p>
               </div>
             )}
           </div>
 
-          {/* Metadata Form Grid (Card component) */}
+          {/* Metadata Form Grid */}
           <Card className="p-6 space-y-4">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm">Metadata & SEO Configuration</CardTitle>
@@ -226,10 +249,17 @@ export default function AdminUploadPage() {
                 ))}
               </div>
             </div>
+
+            {errorMsg && (
+              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-[11px] flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
           </Card>
 
           <Button type="submit" disabled={uploading || !selectedFile} variant="default" className="w-full h-12 text-xs bg-gradient-to-r from-brand-purple to-brand-accent hover:opacity-90 transition-opacity">
-            {uploading ? 'Processing & Ingesting Media...' : 'Publish Archive to Live Website'}
+            {uploading ? 'Uploading & Host Media on ImageKit CDN...' : 'Publish Archive to Live Website'}
           </Button>
         </form>
       )}
