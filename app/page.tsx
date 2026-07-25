@@ -12,6 +12,8 @@ import { MediaItem } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { getPersistentUploadedMedia } from '@/lib/storage/localStorage';
+import { cleanOrGenerateTitle } from '@/lib/utils/captionHelper';
 
 export default function HomePage() {
   const [activeCategory, setActiveCategory] = useState('all');
@@ -23,11 +25,18 @@ export default function HomePage() {
     fetch('/api/media')
       .then((res) => res.json())
       .then((data) => {
-        if (data.media) {
-          setMediaList(data.media);
+        let items: MediaItem[] = data.media || [];
+        const localUploaded = getPersistentUploadedMedia();
+        if (localUploaded.length > 0) {
+          const merged = [...items, ...localUploaded.filter(l => !items.some(i => i.id === l.id))];
+          items = merged;
         }
+        setMediaList(items);
       })
-      .catch(() => {})
+      .catch(() => {
+        const localUploaded = getPersistentUploadedMedia();
+        if (localUploaded.length > 0) setMediaList(localUploaded);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -39,7 +48,6 @@ export default function HomePage() {
     <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 space-y-8">
       {/* Creator Hero Showcase Banner */}
       <div className="relative rounded-3xl overflow-hidden border border-white/10 p-5 sm:p-8 shadow-2xl bg-gradient-to-r from-[#140f21] via-[#1a142c] to-[#140f21]">
-        {/* Decorative Background Glows */}
         <div className="absolute -top-24 -left-24 w-96 h-96 bg-brand-purple/20 blur-[120px] pointer-events-none" />
         <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-brand-accent/20 blur-[120px] pointer-events-none" />
 
@@ -52,7 +60,7 @@ export default function HomePage() {
             </Badge>
 
             <h1 className="font-display font-black text-2xl sm:text-4xl lg:text-5xl text-white tracking-tight leading-tight">
-              Aesthetics, Haute Couture & <span className="gradient-text">Cinematic Stories.</span>
+              Aesthetics, Haute Couture &amp; <span className="gradient-text">Cinematic Stories.</span>
             </h1>
 
             <p className="text-gray-300 text-xs sm:text-sm leading-relaxed">
@@ -78,14 +86,16 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Featured Hero Media Card (Render only if media list is not empty) */}
+          {/* Featured Hero Media Card */}
           {featuredItem && (
             <div className="w-full lg:w-72 shrink-0">
               <Link href={`/media/${featuredItem.id}`} className="block group relative rounded-2xl overflow-hidden border border-brand-purple/40 shadow-neon">
-                <div className="relative aspect-[3/4] w-full">
+                <div className="relative aspect-[3/4] w-full bg-zinc-900">
                   <img
                     src={featuredItem.thumbnailUrl}
                     alt={featuredItem.title}
+                    loading="eager"
+                    fetchPriority="high"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#120e1d]/90 via-[#120e1d]/20 to-transparent" />
@@ -93,7 +103,9 @@ export default function HomePage() {
                     <Flame className="w-3 h-3" /> Pinned Feature
                   </span>
                   <div className="absolute bottom-3 left-3 right-3 text-left space-y-1">
-                    <h3 className="font-display font-bold text-xs text-white line-clamp-1">{featuredItem.title}</h3>
+                    <h3 className="font-display font-bold text-xs text-white line-clamp-1">
+                      {cleanOrGenerateTitle(featuredItem.title)}
+                    </h3>
                   </div>
                 </div>
               </Link>
@@ -110,10 +122,12 @@ export default function HomePage() {
         />
       </div>
 
-      {/* Empty State / Uploaded Media Grid */}
+      {/* Empty State / Uploaded Media Grid / Skeleton Loader */}
       {loading ? (
-        <div className="py-20 text-center text-gray-400 text-xs font-mono">
-          Loading editorial archives...
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 py-8">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+            <div key={n} className="aspect-[3/4] rounded-2xl bg-zinc-800/60 animate-pulse border border-zinc-800" />
+          ))}
         </div>
       ) : mediaList.length === 0 ? (
         /* Empty State Card - Shadcn Style */
@@ -136,7 +150,7 @@ export default function HomePage() {
         </Card>
       ) : (
         <>
-          {/* Trending Carousel Section (Only render if trending items exist) */}
+          {/* Trending Carousel Section */}
           {trendingItems.length > 0 && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -157,11 +171,13 @@ export default function HomePage() {
                       <img
                         src={item.thumbnailUrl}
                         alt={item.title}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#120e1d]/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                       <div className="absolute bottom-2 left-2 right-2">
-                        <p className="text-xs font-semibold text-white line-clamp-1">{item.title}</p>
+                        <p className="text-xs font-semibold text-white line-clamp-1">{cleanOrGenerateTitle(item.title)}</p>
                       </div>
                     </div>
                   </Link>

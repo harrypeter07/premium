@@ -1,3 +1,11 @@
+export interface CommentItem {
+  id: string;
+  mediaId: string;
+  userName: string;
+  text: string;
+  timestamp: string;
+}
+
 export function getSavedBookmarks(): string[] {
   if (typeof window === 'undefined') return [];
   try {
@@ -78,4 +86,61 @@ export function clearWatchHistory() {
   if (typeof window === 'undefined') return;
   localStorage.removeItem('smr_history');
   window.dispatchEvent(new Event('smr_history_updated'));
+}
+
+export function getCommentsForMedia(mediaId: string): CommentItem[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const data = localStorage.getItem(`smr_comments_${mediaId}`);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function addCommentForMedia(mediaId: string, userName: string, text: string): CommentItem {
+  const comments = getCommentsForMedia(mediaId);
+  const newComment: CommentItem = {
+    id: `comm-${Date.now()}`,
+    mediaId,
+    userName: userName.trim() || 'Visual Connoisseur',
+    text: text.trim(),
+    timestamp: new Date().toISOString(),
+  };
+  comments.unshift(newComment);
+  localStorage.setItem(`smr_comments_${mediaId}`, JSON.stringify(comments));
+  return newComment;
+}
+
+export function getRatingForMedia(mediaId: string): number {
+  if (typeof window === 'undefined') return 5;
+  try {
+    const data = localStorage.getItem(`smr_rating_${mediaId}`);
+    return data ? Number(data) : 5;
+  } catch {
+    return 5;
+  }
+}
+
+export function setRatingForMedia(mediaId: string, rating: number) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(`smr_rating_${mediaId}`, String(rating));
+}
+
+// Persistent Uploaded Media Storage (so uploaded images are NEVER lost on Vercel redeploys!)
+export function getPersistentUploadedMedia(): any[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const data = localStorage.getItem('smr_uploaded_media');
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function savePersistentUploadedMedia(items: any[]) {
+  if (typeof window === 'undefined') return;
+  const current = getPersistentUploadedMedia();
+  const merged = [...items, ...current.filter(c => !items.some(i => i.id === c.id))];
+  localStorage.setItem('smr_uploaded_media', JSON.stringify(merged));
 }

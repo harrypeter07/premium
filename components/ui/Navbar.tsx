@@ -45,6 +45,7 @@ export default function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
     { name: 'Videos', href: '/videos', icon: Video },
     { name: 'Photos', href: '/images', icon: ImageIcon },
     { name: 'Creator', href: '/creator', icon: User },
+    ...(isAdmin ? [{ name: 'Admin Studio', href: '/admin', icon: ShieldCheck }] : []),
   ];
 
   return (
@@ -70,7 +71,7 @@ export default function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
 
         <div className="w-px h-5 bg-white/10 hidden md:block" />
 
-        {/* Desktop Nav Links — flat, sharp, minimal */}
+        {/* Desktop Nav Links */}
         <nav className="hidden md:flex items-center gap-0.5 flex-1">
           {navLinks.map((link) => {
             const Icon = link.icon;
@@ -113,11 +114,6 @@ export default function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
             <kbd className="text-[9px] font-mono bg-white/10 px-1.5 py-0.5 rounded text-zinc-500">⌘K</kbd>
           </Button>
 
-          {/* Mobile Search */}
-          <Button variant="ghost" size="icon" onClick={onOpenSearch} className="h-8 w-8 sm:hidden text-zinc-400">
-            <Search className="w-4 h-4" />
-          </Button>
-
           {/* Bookmarks */}
           <Link href="/bookmarks">
             <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-white relative">
@@ -130,15 +126,15 @@ export default function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
             </Button>
           </Link>
 
-          {/* Admin button — only for logged-in admin */}
+          {/* Admin button — explicitly displays "Admin Studio" for authenticated admin */}
           {isAdmin && (
             <Link href="/admin">
               <Button
                 size="sm"
-                className="h-8 gap-1.5 text-xs bg-violet-600 hover:bg-violet-500 text-white border-0"
+                className="h-8 gap-1.5 text-xs bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-90 text-white border-0 shadow-lg font-bold"
               >
                 <ShieldCheck className="w-3.5 h-3.5" />
-                Studio
+                <span>Admin Studio</span>
               </Button>
             </Link>
           )}
@@ -148,7 +144,7 @@ export default function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
             variant="ghost"
             size="icon"
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="h-8 w-8 md:hidden text-zinc-400"
+            className="md:hidden h-8 w-8 text-zinc-400"
           >
             {mobileOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
           </Button>
@@ -185,17 +181,6 @@ export default function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
                   </Link>
                 );
               })}
-
-              {isAdmin && (
-                <Link
-                  href="/admin"
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2.5 mt-2 rounded-md text-sm font-medium bg-violet-600/30 text-violet-300 border border-violet-500/30"
-                >
-                  <ShieldCheck className="w-4 h-4" />
-                  Admin Studio
-                </Link>
-              )}
             </div>
           </motion.div>
         )}

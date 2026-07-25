@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Upload, Sparkles, CheckCircle, ArrowLeft, AlertCircle, Loader2, Image as ImageIcon, Video, Folder } from 'lucide-react';
+import { Upload, Sparkles, CheckCircle, ArrowLeft, AlertCircle, Loader2, Image as ImageIcon, Video, Folder, Layers } from 'lucide-react';
 import { CATEGORIES_LIST } from '@/lib/data/mockData';
 import { CollectionItem } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { savePersistentUploadedMedia } from '@/lib/storage/localStorage';
 
 type MediaType = 'IMAGE' | 'VIDEO';
 type Visibility = 'PUBLIC' | 'PRIVATE' | 'DRAFT';
@@ -17,8 +18,9 @@ export default function AdminUploadPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
 
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState('');
+  // Multi-select state
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [dragActive, setDragActive] = useState(false);
 
   const [title, setTitle] = useState('');
@@ -26,14 +28,13 @@ export default function AdminUploadPage() {
   const [categorySlug, setCategorySlug] = useState('fashion');
   const [collectionId, setCollectionId] = useState('');
   const [collectionsList, setCollectionsList] = useState<CollectionItem[]>([]);
-  const [mediaType, setMediaType] = useState<MediaType>('IMAGE');
   const [visibility, setVisibility] = useState<Visibility>('PUBLIC');
   const [isFeatured, setIsFeatured] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
 
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [publishedItem, setPublishedItem] = useState<{ id: string; url: string } | null>(null);
+  const [publishedCount, setPublishedCount] = useState(0);
   const [errorMsg, setErrorMsg] = useState('');
   const [uploadStep, setUploadStep] = useState('');
 
@@ -72,78 +73,106 @@ export default function AdminUploadPage() {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragActive(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) processFile(file);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processFiles(Array.from(e.dataTransfer.files));
+    }
   };
 
-  const processFile = (file: File) => {
-    setSelectedFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
-    setTitle(file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '));
-    setMediaType(file.type.startsWith('video/') ? 'VIDEO' : 'IMAGE');
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      processFiles(Array.from(e.target.files));
+    }
+  };
+
+  const processFiles = (files: File[]) => {
+    setSelectedFiles(files);
+    const urls = files.map(file => URL.createObjectURL(file));
+    setPreviewUrls(urls);
+    if (files.length === 1) {
+      setTitle(files[0].name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '));
+    } else {
+      setTitle('');
+    }
     setErrorMsg('');
     setSuccess(false);
-    console.log('[Upload] File selected:', file.name, file.type, `${(file.size / 1024 / 1024).toFixed(2)}MB`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedFile) { setErrorMsg('Please select a file first.'); return; }
+    if (selectedFiles.length === 0) { setErrorMsg('Please select at least one file to upload.'); return; }
 
     setUploading(true);
     setErrorMsg('');
     setSuccess(false);
+    setPublishedCount(0);
+
+    const uploadedResults: any[] = [];
 
     try {
-      // STEP 1: Upload to ImageKit
-      setUploadStep('Uploading to ImageKit CDN...');
-      console.log('[Upload] Step 1: Starting ImageKit upload for', selectedFile.name);
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const file = selectedFiles[i];
+        setUploadStep(`Uploading ${i + 1} of ${selectedFiles.length}: ${file.name}...`);
 
-      const formData = new FormData();
-      formData.append('file', selectedFile);
+        // STEP 1: Upload to ImageKit CDN
+        const formData = new FormData();
+        formData.append('file', file);
 
-      const uploadRes = await fetch('/api/media/upload', {
-        method: 'POST',
-        body: formData,
-      });
+        const uploadRes = await fetch('/api/media/upload', {
+          method: 'POST',
+          body: formData,
+        });
 
-      const uploadData = await uploadRes.json();
+        const uploadData = await uploadRes.json();
 
-      if (!uploadRes.ok) {
-        throw new Error(`ImageKit upload failed: ${uploadData.error || uploadRes.statusText}`);
+        if (!uploadRes.ok) {
+          throw new Error(`ImageKit upload failed for ${file.name}: ${uploadData.error || uploadRes.statusText}`);
+        }
+
+        const imageKitUrl = uploadData.url;
+        const thumbnailUrl = uploadData.thumbnailUrl || uploadData.url;
+        const isVideo = file.type.startsWith('video/');
+
+        const itemTitle = selectedFiles.length === 1 && title.trim()
+          ? title.trim()
+          : file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+
+        // STEP 2: Save metadata to feed store
+        const metaRes = await fetch('/api/media', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: itemTitle,
+            description: description.trim(),
+            type: isVideo ? 'VIDEO' : 'IMAGE',
+            url: imageKitUrl,
+            thumbnailUrl,
+            categorySlug,
+            collectionId: collectionId || undefined,
+            visibility,
+            isFeatured,
+            isPinned: isPinned && i === 0,
+            tags: ['SmritiShah', categorySlug, isVideo ? 'CinematicVideo' : 'Photography'],
+          }),
+        });
+
+        const metaData = await metaRes.json();
+
+        if (!metaRes.ok) {
+          throw new Error(`Failed to publish ${file.name}: ${metaData.error || metaRes.statusText}`);
+        }
+
+        if (metaData.media) {
+          uploadedResults.push(metaData.media);
+        }
+
+        setPublishedCount(i + 1);
       }
 
-      const imageKitUrl = uploadData.url;
-      const thumbnailUrl = uploadData.thumbnailUrl || uploadData.url;
-
-      // STEP 2: Save metadata to feed store
-      setUploadStep('Publishing to live feed...');
-
-      const metaRes = await fetch('/api/media', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: title.trim(),
-          description: description.trim(),
-          type: mediaType,
-          url: imageKitUrl,
-          thumbnailUrl,
-          categorySlug,
-          collectionId: collectionId || undefined,
-          visibility,
-          isFeatured,
-          isPinned,
-          tags: ['SmritiShah', categorySlug, mediaType === 'VIDEO' ? 'CinematicVideo' : 'Photography'],
-        }),
-      });
-
-      const metaData = await metaRes.json();
-
-      if (!metaRes.ok) {
-        throw new Error(`Failed to publish: ${metaData.error || metaRes.statusText}`);
+      // Save to client persistent storage so uploaded items are NEVER lost!
+      if (uploadedResults.length > 0) {
+        savePersistentUploadedMedia(uploadedResults);
       }
 
-      setPublishedItem({ id: metaData.media?.id || '', url: imageKitUrl });
       setSuccess(true);
       setUploadStep('');
 
@@ -158,8 +187,8 @@ export default function AdminUploadPage() {
   };
 
   const resetForm = () => {
-    setSelectedFile(null);
-    setPreviewUrl('');
+    setSelectedFiles([]);
+    setPreviewUrls([]);
     setTitle('');
     setDescription('');
     setCategorySlug('fashion');
@@ -168,7 +197,7 @@ export default function AdminUploadPage() {
     setIsFeatured(false);
     setIsPinned(false);
     setSuccess(false);
-    setPublishedItem(null);
+    setPublishedCount(0);
     setErrorMsg('');
   };
 
@@ -184,16 +213,16 @@ export default function AdminUploadPage() {
         </Link>
         <Badge variant="outline" className="gap-1.5 text-xs border-violet-500/40 text-violet-400">
           <Upload className="w-3 h-3" />
-          Media Ingestion
+          Bulk Media Ingestion
         </Badge>
       </div>
 
       <div>
-        <h1 className="font-black text-2xl sm:text-3xl text-white">Upload Archive</h1>
-        <p className="text-zinc-400 text-sm mt-1">Images &amp; videos are hosted on ImageKit CDN, then published to your live feed.</p>
+        <h1 className="font-black text-2xl sm:text-3xl text-white">Multi-Select Bulk Upload</h1>
+        <p className="text-zinc-400 text-sm mt-1">Select multiple images &amp; videos at once. Files are hosted on ImageKit CDN and saved permanently to your live feed.</p>
       </div>
 
-      {success && publishedItem ? (
+      {success ? (
         /* ─── Success State ─── */
         <Card className="p-0 border border-emerald-500/30 bg-emerald-500/5 overflow-hidden">
           <div className="p-6 text-center space-y-3">
@@ -201,20 +230,17 @@ export default function AdminUploadPage() {
               <CheckCircle className="w-6 h-6 text-emerald-400" />
             </div>
             <div>
-              <h2 className="font-bold text-lg text-white">Published Successfully!</h2>
-              <p className="text-xs text-zinc-400 mt-1">Your archive is now live on the website feed.</p>
-            </div>
-            <div className="inline-block text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded px-2 py-1 break-all">
-              {publishedItem.url}
+              <h2 className="font-bold text-lg text-white">{publishedCount} Archive(s) Published Successfully!</h2>
+              <p className="text-xs text-zinc-400 mt-1">All selected media items are hosted on ImageKit CDN and live on your portfolio.</p>
             </div>
           </div>
           <CardFooter className="p-3 gap-2 justify-center border-t border-emerald-500/20 bg-transparent">
             <Button onClick={resetForm} size="sm" className="bg-violet-600 hover:bg-violet-500 text-white">
-              Upload Another
+              Upload More Files
             </Button>
             <Link href="/">
               <Button variant="outline" size="sm" className="border-zinc-700">
-                View Live Site
+                View Live Portfolio
               </Button>
             </Link>
           </CardFooter>
@@ -224,21 +250,24 @@ export default function AdminUploadPage() {
           {/* ─── Publish button at TOP ─── */}
           <div className="flex items-center justify-between gap-3 p-3 rounded-xl border border-zinc-700/60 bg-zinc-900/50">
             <div className="text-xs text-zinc-400">
-              {selectedFile ? (
-                <span className="text-white font-medium">{selectedFile.name} <span className="text-zinc-500">· {(selectedFile.size / 1024 / 1024).toFixed(1)}MB</span></span>
+              {selectedFiles.length > 0 ? (
+                <span className="text-white font-medium flex items-center gap-1.5">
+                  <Layers className="w-4 h-4 text-violet-400" />
+                  {selectedFiles.length} file(s) selected
+                </span>
               ) : (
-                'No file selected'
+                'No files selected'
               )}
             </div>
             <Button
               type="submit"
-              disabled={uploading || !selectedFile}
+              disabled={uploading || selectedFiles.length === 0}
               className="shrink-0 bg-violet-600 hover:bg-violet-500 text-white disabled:opacity-40 gap-2"
             >
               {uploading ? (
                 <><Loader2 className="w-4 h-4 animate-spin" />{uploadStep || 'Publishing...'}</>
               ) : (
-                <><Upload className="w-4 h-4" />Publish</>
+                <><Upload className="w-4 h-4" />Publish {selectedFiles.length > 1 ? `(${selectedFiles.length} items)` : ''}</>
               )}
             </Button>
           </div>
@@ -251,7 +280,7 @@ export default function AdminUploadPage() {
             </div>
           )}
 
-          {/* ─── File Drop Zone ─── */}
+          {/* ─── Multi-File Drop Zone ─── */}
           <div
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
@@ -263,23 +292,19 @@ export default function AdminUploadPage() {
           >
             <input
               type="file"
+              multiple
               accept="image/*,video/*"
-              onChange={e => e.target.files?.[0] && processFile(e.target.files[0])}
+              onChange={handleFileChange}
               className="absolute inset-0 opacity-0 cursor-pointer"
             />
-            {previewUrl ? (
-              <div className="flex items-center gap-4">
-                {mediaType === 'IMAGE' ? (
-                  <img src={previewUrl} alt="Preview" className="w-20 h-20 object-cover rounded-lg border border-zinc-600" />
-                ) : (
-                  <div className="w-20 h-20 rounded-lg border border-zinc-600 bg-zinc-800 flex items-center justify-center">
-                    <Video className="w-8 h-8 text-violet-400" />
-                  </div>
-                )}
-                <div className="text-left">
-                  <p className="text-sm font-medium text-white">{selectedFile?.name}</p>
-                  <p className="text-xs text-zinc-400 mt-0.5">{mediaType} · Click to change</p>
+            {previewUrls.length > 0 ? (
+              <div className="space-y-3 w-full">
+                <div className="flex flex-wrap justify-center gap-2 max-h-40 overflow-y-auto p-1">
+                  {previewUrls.map((url, idx) => (
+                    <img key={idx} src={url} alt={`Preview ${idx}`} className="w-16 h-16 object-cover rounded-lg border border-zinc-700 shadow-md" />
+                  ))}
                 </div>
+                <p className="text-xs text-zinc-400">{selectedFiles.length} file(s) ready · Click or drop to replace</p>
               </div>
             ) : (
               <>
@@ -287,8 +312,8 @@ export default function AdminUploadPage() {
                   <ImageIcon className="w-5 h-5 text-zinc-400" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-white">Drop image or video here</p>
-                  <p className="text-xs text-zinc-500 mt-0.5">or click to browse files</p>
+                  <p className="text-sm font-medium text-white">Select or drop multiple images &amp; videos here</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">Supports bulk uploading</p>
                 </div>
               </>
             )}
@@ -300,11 +325,13 @@ export default function AdminUploadPage() {
               {/* Row 1: Title + Category */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-medium">Title (Optional - Auto generated if empty)</label>
+                  <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-medium">
+                    {selectedFiles.length > 1 ? 'Title Pattern (Optional - Auto generated per file if empty)' : 'Title (Optional - Auto generated if empty)'}
+                  </label>
                   <Input
                     value={title}
                     onChange={e => setTitle(e.target.value)}
-                    placeholder="Leave empty for auto-generated caption"
+                    placeholder="Leave empty for auto-generated captions"
                     className="h-9 text-sm"
                   />
                 </div>
@@ -373,7 +400,7 @@ export default function AdminUploadPage() {
                 </label>
                 <label className="flex items-center gap-1.5 cursor-pointer text-xs text-zinc-300 mt-4">
                   <input type="checkbox" checked={isPinned} onChange={e => setIsPinned(e.target.checked)} className="accent-violet-500 w-3.5 h-3.5" />
-                  Pin to top hero
+                  Pin first item to top hero
                 </label>
               </div>
             </CardContent>
