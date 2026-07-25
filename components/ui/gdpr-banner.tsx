@@ -1,170 +1,124 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { Shield, Check, Settings, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from './button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './card';
-import { Badge } from './badge';
-import { Shield, Settings, Check } from 'lucide-react';
+import { Card, CardContent, CardFooter } from './card';
 
 export default function GDPRConsentBanner() {
   const [showBanner, setShowBanner] = useState(false);
-  const [showManageModal, setShowManageModal] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [analyticsConsent, setAnalyticsConsent] = useState(true);
   const [adsConsent, setAdsConsent] = useState(true);
 
   useEffect(() => {
-    const consent = localStorage.getItem('smr_gdpr_consent');
-    if (!consent) {
-      setShowBanner(true);
-    }
+    if (!localStorage.getItem('smr_gdpr_consent')) setShowBanner(true);
   }, []);
 
-  const handleAcceptAll = () => {
-    localStorage.setItem(
-      'smr_gdpr_consent',
-      JSON.stringify({
-        necessary: true,
-        analytics: true,
-        ads: true,
-        tcfCompliant: true,
-        timestamp: new Date().toISOString(),
-      })
-    );
+  const save = (analytics: boolean, ads: boolean) => {
+    localStorage.setItem('smr_gdpr_consent', JSON.stringify({
+      necessary: true, analytics, ads, tcfCompliant: true, timestamp: new Date().toISOString(),
+    }));
     setShowBanner(false);
-    setShowManageModal(false);
-  };
-
-  const handleRejectAll = () => {
-    localStorage.setItem(
-      'smr_gdpr_consent',
-      JSON.stringify({
-        necessary: true,
-        analytics: false,
-        ads: false,
-        tcfCompliant: true,
-        timestamp: new Date().toISOString(),
-      })
-    );
-    setShowBanner(false);
-    setShowManageModal(false);
-  };
-
-  const handleSaveCustomPreferences = () => {
-    localStorage.setItem(
-      'smr_gdpr_consent',
-      JSON.stringify({
-        necessary: true,
-        analytics: analyticsConsent,
-        ads: adsConsent,
-        tcfCompliant: true,
-        timestamp: new Date().toISOString(),
-      })
-    );
-    setShowBanner(false);
-    setShowManageModal(false);
+    setShowModal(false);
   };
 
   if (!showBanner) return null;
 
   return (
     <>
-      {/* Bottom Sticky Floating GDPR CMP Consent Banner */}
-      <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-6 md:max-w-md z-50 animate-in fade-in slide-in-from-bottom-5">
-        <Card className="border border-brand-purple/40 shadow-2xl bg-[#140f21]/95">
-          <CardHeader className="pb-3">
+      {/* Compact bottom-right cookie banner */}
+      <div className="fixed bottom-4 right-4 z-50 w-80 animate-in slide-in-from-bottom-4 fade-in duration-300">
+        <Card className="border border-zinc-700 bg-zinc-900/95 backdrop-blur-xl shadow-2xl overflow-hidden">
+          <CardContent className="p-4 space-y-3">
+            {/* Header Row */}
             <div className="flex items-center justify-between">
-              <Badge variant="default" className="flex items-center gap-1">
-                <Shield className="w-3 h-3 text-brand-purple" />
-                <span>GDPR & IAB TCF Compliant</span>
-              </Badge>
-              <span className="text-[10px] text-gray-400 font-mono">EEA / UK / CH</span>
+              <div className="flex items-center gap-1.5">
+                <Shield className="w-3.5 h-3.5 text-violet-400" />
+                <span className="text-xs font-semibold text-white">Cookie Consent</span>
+              </div>
+              <span className="text-[9px] text-zinc-500 font-mono">EEA / UK / CH</span>
             </div>
-            <CardTitle className="text-sm mt-1">Privacy & Cookie Consent</CardTitle>
-            <CardDescription className="text-[11px] text-gray-300 leading-relaxed">
-              We and our partners (Google AdSense) use cookies and user data to deliver personalized ads, measure audience insights, and optimize high-resolution media streaming.
-            </CardDescription>
-          </CardHeader>
 
-          <CardFooter className="flex flex-wrap items-center justify-end gap-2 pt-0">
-            <Button variant="ghost" size="sm" onClick={() => setShowManageModal(true)} className="text-[11px]">
-              <Settings className="w-3.5 h-3.5 mr-1" />
-              Manage Options
+            {/* Short description always visible */}
+            <p className="text-[11px] text-zinc-400 leading-relaxed">
+              We use cookies to serve ads and measure performance.{' '}
+              <button
+                onClick={() => setExpanded(!expanded)}
+                className="text-violet-400 hover:text-violet-300 underline underline-offset-2 inline-flex items-center gap-0.5"
+              >
+                {expanded ? 'Hide details' : 'Show details'}
+                {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              </button>
+            </p>
+
+            {/* Collapsible details */}
+            {expanded && (
+              <div className="space-y-2 border-t border-zinc-700 pt-2">
+                <div className="flex items-center justify-between py-1.5">
+                  <div>
+                    <p className="text-[11px] font-medium text-white">Strictly Necessary</p>
+                    <p className="text-[9px] text-zinc-500">Site security &amp; streaming</p>
+                  </div>
+                  <span className="text-[9px] text-emerald-400 font-medium bg-emerald-500/10 px-1.5 py-0.5 rounded">Always on</span>
+                </div>
+
+                <div className="flex items-center justify-between py-1.5">
+                  <div>
+                    <p className="text-[11px] font-medium text-white">Analytics</p>
+                    <p className="text-[9px] text-zinc-500">Performance &amp; engagement</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" className="sr-only peer" checked={analyticsConsent} onChange={e => setAnalyticsConsent(e.target.checked)} />
+                    <div className="w-7 h-4 bg-zinc-700 peer-checked:bg-violet-600 rounded-full transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:w-3 after:h-3 after:transition-all peer-checked:after:translate-x-3" />
+                  </label>
+                </div>
+
+                <div className="flex items-center justify-between py-1.5">
+                  <div>
+                    <p className="text-[11px] font-medium text-white">Advertising (TCF v2.2)</p>
+                    <p className="text-[9px] text-zinc-500">Google AdSense personalization</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" className="sr-only peer" checked={adsConsent} onChange={e => setAdsConsent(e.target.checked)} />
+                    <div className="w-7 h-4 bg-zinc-700 peer-checked:bg-violet-600 rounded-full transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:w-3 after:h-3 after:transition-all peer-checked:after:translate-x-3" />
+                  </label>
+                </div>
+              </div>
+            )}
+          </CardContent>
+
+          <CardFooter className="p-3 pt-0 flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => save(false, false)}
+              className="flex-1 h-8 text-[11px] text-zinc-400 hover:text-white"
+            >
+              Reject
             </Button>
-            <Button variant="secondary" size="sm" onClick={handleRejectAll} className="text-[11px]">
-              Do Not Consent
-            </Button>
-            <Button variant="default" size="sm" onClick={handleAcceptAll} className="text-[11px] bg-gradient-to-r from-brand-purple to-brand-accent hover:opacity-90 transition-all">
-              <Check className="w-3.5 h-3.5 mr-1" />
-              Consent
+            {expanded && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => save(analyticsConsent, adsConsent)}
+                className="flex-1 h-8 text-[11px] border-zinc-700"
+              >
+                Save
+              </Button>
+            )}
+            <Button
+              size="sm"
+              onClick={() => save(true, true)}
+              className="flex-1 h-8 text-[11px] bg-violet-600 hover:bg-violet-500 text-white border-0"
+            >
+              <Check className="w-3 h-3 mr-1" />
+              Accept All
             </Button>
           </CardFooter>
         </Card>
       </div>
-
-      {/* Preferences Dialog Modal */}
-      {showManageModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0d0917]/90 backdrop-blur-xl animate-in fade-in">
-          <Card className="w-full max-w-lg border border-brand-purple/40 shadow-2xl bg-[#181326] space-y-4 p-6">
-            <CardHeader className="p-0">
-              <Badge variant="default" className="w-fit mb-1">
-                Transparency & Consent Framework (TCF v2.2)
-              </Badge>
-              <CardTitle className="text-lg">Cookie Preferences & Privacy Settings</CardTitle>
-              <CardDescription className="text-xs">
-                Customize your consent choices for personalized advertising and telemetry.
-              </CardDescription>
-            </CardHeader>
-
-            <CardContent className="p-0 space-y-3 text-xs">
-              {/* Strictly Necessary */}
-              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between">
-                <div>
-                  <h4 className="font-bold text-white">Strictly Necessary Cookies</h4>
-                  <p className="text-[10px] text-gray-400">Required for media streaming, security, and site functionality.</p>
-                </div>
-                <Badge variant="default" className="border-emerald-500/40 bg-emerald-500/20 text-emerald-400">Always Active</Badge>
-              </div>
-
-              {/* Analytics */}
-              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between">
-                <div>
-                  <h4 className="font-bold text-white">Analytics & Performance Telemetry</h4>
-                  <p className="text-[10px] text-gray-400">Helps us measure audience engagement and video playback speeds.</p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={analyticsConsent}
-                  onChange={(e) => setAnalyticsConsent(e.target.checked)}
-                  className="w-4 h-4 accent-brand-purple rounded cursor-pointer"
-                />
-              </div>
-
-              {/* Ad Personalization */}
-              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between">
-                <div>
-                  <h4 className="font-bold text-white">Google AdSense Personalization (TCF v2.2)</h4>
-                  <p className="text-[10px] text-gray-400">Used by Google certified CMP partners to serve relevant ads in EEA/UK/CH.</p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={adsConsent}
-                  onChange={(e) => setAdsConsent(e.target.checked)}
-                  className="w-4 h-4 accent-brand-purple rounded cursor-pointer"
-                />
-              </div>
-            </CardContent>
-
-            <CardFooter className="p-0 flex items-center justify-between pt-2 border-t border-white/10">
-              <Button variant="ghost" size="sm" onClick={() => setShowManageModal(false)}>
-                Cancel
-              </Button>
-              <Button variant="default" size="sm" onClick={handleSaveCustomPreferences} className="bg-gradient-to-r from-brand-purple to-brand-accent hover:opacity-90 transition-all">
-                Save Preferences
-              </Button>
-            </CardFooter>
-          </Card>
-        </div>
-      )}
     </>
   );
 }

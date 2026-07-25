@@ -3,47 +3,40 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Bookmark, Compass, Video, Image as ImageIcon, User, ShieldCheck, Menu, X, Sparkles } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  Sparkles, Compass, Video, Image as ImageIcon, User,
+  ShieldCheck, Menu, X, Search, Bookmark
+} from 'lucide-react';
 import { getSavedBookmarks } from '@/lib/storage/localStorage';
-import { Button } from './button';
+import { Button } from '@/components/ui/button';
 
 export default function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [bookmarkCount, setBookmarkCount] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 15);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   useEffect(() => {
-    const checkAdmin = () => {
-      setIsAdmin(localStorage.getItem('smr_admin_session') === 'authorized');
-    };
-    checkAdmin();
-    // Listen to storage events to update navigation instantly
-    window.addEventListener('storage', checkAdmin);
-    const interval = setInterval(checkAdmin, 1000);
-    return () => {
-      window.removeEventListener('storage', checkAdmin);
-      clearInterval(interval);
-    };
+    const check = () => setIsAdmin(localStorage.getItem('smr_admin_session') === 'authorized');
+    check();
+    const iv = setInterval(check, 1500);
+    window.addEventListener('storage', check);
+    return () => { clearInterval(iv); window.removeEventListener('storage', check); };
   }, []);
 
   useEffect(() => {
-    const updateCount = () => {
-      setBookmarkCount(getSavedBookmarks().length);
-    };
-    updateCount();
-    window.addEventListener('smr_bookmarks_updated', updateCount);
-    return () => window.removeEventListener('smr_bookmarks_updated', updateCount);
+    const upd = () => setBookmarkCount(getSavedBookmarks().length);
+    upd();
+    window.addEventListener('smr_bookmarks_updated', upd);
+    return () => window.removeEventListener('smr_bookmarks_updated', upd);
   }, []);
 
   const navLinks = [
@@ -56,145 +49,151 @@ export default function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-200 ${
         scrolled
-          ? 'bg-[#120e1d]/90 backdrop-blur-xl border-b border-white/10 py-2 shadow-2xl'
-          : 'bg-gradient-to-b from-[#120e1d]/95 via-[#120e1d]/60 to-transparent py-3'
+          ? 'border-b border-white/8 bg-[#0d0917]/95 backdrop-blur-2xl shadow-lg'
+          : 'bg-[#0d0917]/80 backdrop-blur-md'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-        {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-purple to-brand-accent p-[1px] shadow-neon">
-            <div className="w-full h-full bg-[#181326] rounded-[11px] flex items-center justify-center group-hover:bg-transparent transition-all">
-              <span className="font-display font-black text-sm text-white tracking-tighter">SS</span>
-            </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center gap-6">
+
+        {/* Brand */}
+        <Link href="/" className="flex items-center gap-3 shrink-0 group">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-600 to-fuchsia-500 flex items-center justify-center shadow-lg">
+            <span className="font-black text-xs text-white tracking-tighter">SS</span>
           </div>
-          <div className="flex flex-col">
-            <span className="font-display font-extrabold text-sm sm:text-base text-white tracking-tight leading-none group-hover:text-brand-purple transition-colors">
-              SMRITI SHAH
-            </span>
-            <span className="text-[8px] uppercase tracking-widest text-gray-400 font-medium mt-0.5">
-              Visual Portfolio
-            </span>
+          <div className="hidden sm:block">
+            <p className="font-black text-sm text-white tracking-tight leading-none group-hover:text-violet-300 transition-colors">SMRITI SHAH</p>
+            <p className="text-[9px] uppercase tracking-[0.2em] text-zinc-500 mt-0.5">Visual Portfolio</p>
           </div>
         </Link>
 
-        {/* Streamlined Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-1 bg-[#181326]/60 border border-white/10 px-3 py-1 rounded-full backdrop-blur-md">
+        <div className="w-px h-5 bg-white/10 hidden md:block" />
+
+        {/* Desktop Nav Links — flat, sharp, minimal */}
+        <nav className="hidden md:flex items-center gap-0.5 flex-1">
           {navLinks.map((link) => {
             const Icon = link.icon;
-            const isActive = pathname === link.href;
+            const active = pathname === link.href;
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`relative px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all flex items-center gap-1.5 ${
-                  isActive
-                    ? 'text-white'
-                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                className={`relative flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium tracking-wide rounded-md transition-all duration-150 ${
+                  active
+                    ? 'text-white bg-white/8'
+                    : 'text-zinc-400 hover:text-white hover:bg-white/5'
                 }`}
               >
-                {isActive && (
+                <Icon className={`w-3.5 h-3.5 ${active ? 'text-violet-400' : ''}`} />
+                {link.name}
+                {active && (
                   <motion.div
-                    layoutId="activeNavIndicator"
-                    className="absolute inset-0 bg-gradient-to-r from-brand-purple/30 to-brand-accent/30 rounded-full border border-brand-purple/40 shadow-neon"
-                    transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                    layoutId="nav-active"
+                    className="absolute bottom-0 left-3 right-3 h-[2px] bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full"
+                    transition={{ type: 'spring', stiffness: 500, damping: 40 }}
                   />
                 )}
-                <Icon className={`w-3.5 h-3.5 relative z-10 ${isActive ? 'text-brand-purple' : ''}`} />
-                <span className="relative z-10">{link.name}</span>
               </Link>
             );
           })}
         </nav>
 
-        {/* Header Quick Actions */}
-        <div className="flex items-center gap-2">
-          {/* Search Trigger */}
-          <button
+        {/* Right Actions */}
+        <div className="flex items-center gap-2 ml-auto">
+          {/* Search */}
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={onOpenSearch}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 hover:border-brand-purple/40 text-gray-300 hover:text-white transition-all text-[11px]"
-            aria-label="Search media"
+            className="h-8 gap-2 text-zinc-400 hover:text-white text-xs hidden sm:flex border border-white/8 bg-white/3"
           >
-            <Search className="w-3.5 h-3.5 text-brand-purple" />
-            <span className="hidden sm:inline font-medium">Search...</span>
-          </button>
+            <Search className="w-3.5 h-3.5" />
+            <span>Search</span>
+            <kbd className="text-[9px] font-mono bg-white/10 px-1.5 py-0.5 rounded text-zinc-500">⌘K</kbd>
+          </Button>
 
-          {/* Bookmarks Counter */}
-          <Link
-            href="/bookmarks"
-            className="relative p-2 rounded-full bg-white/5 border border-white/10 hover:border-brand-purple/40 text-gray-300 hover:text-white transition-all"
-            title="Saved Bookmarks"
-          >
-            <Bookmark className="w-4 h-4 text-brand-purple" />
-            {bookmarkCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-brand-accent text-white text-[9px] font-bold flex items-center justify-center shadow-lg">
-                {bookmarkCount}
-              </span>
-            )}
+          {/* Mobile Search */}
+          <Button variant="ghost" size="icon" onClick={onOpenSearch} className="h-8 w-8 sm:hidden text-zinc-400">
+            <Search className="w-4 h-4" />
+          </Button>
+
+          {/* Bookmarks */}
+          <Link href="/bookmarks">
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-white relative">
+              <Bookmark className="w-4 h-4" />
+              {bookmarkCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-violet-500 text-white text-[8px] font-bold flex items-center justify-center">
+                  {bookmarkCount}
+                </span>
+              )}
+            </Button>
           </Link>
 
-          {/* Admin Dashboard Entry - Hidden to Public (Only visible to logged-in Admin) */}
+          {/* Admin button — only for logged-in admin */}
           {isAdmin && (
             <Link href="/admin">
-              <Button variant="default" size="sm" className="gap-1.5 bg-gradient-to-r from-brand-purple to-brand-accent hover:opacity-90 shadow-neon">
+              <Button
+                size="sm"
+                className="h-8 gap-1.5 text-xs bg-violet-600 hover:bg-violet-500 text-white border-0"
+              >
                 <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Admin Studio</span>
+                Studio
               </Button>
             </Link>
           )}
 
-          {/* Mobile Menu Toggle */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-full bg-white/5 border border-white/10 text-white"
-            aria-label="Toggle menu"
+          {/* Mobile hamburger */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="h-8 w-8 md:hidden text-zinc-400"
           >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
+            {mobileOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+          </Button>
         </div>
       </div>
 
-      {/* Mobile Drawer Navigation */}
+      {/* Mobile Menu */}
       <AnimatePresence>
-        {mobileMenuOpen && (
+        {mobileOpen && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-[#120e1d]/95 border-b border-white/10 px-4 pt-3 pb-5 mt-2 shadow-2xl overflow-hidden"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="md:hidden overflow-hidden border-t border-white/8 bg-[#0d0917]/98"
           >
-            <div className="grid grid-cols-2 gap-2">
+            <div className="px-4 py-3 space-y-1">
               {navLinks.map((link) => {
                 const Icon = link.icon;
-                const isActive = pathname === link.href;
+                const active = pathname === link.href;
                 return (
                   <Link
                     key={link.href}
                     href={link.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
-                      isActive
-                        ? 'bg-gradient-to-r from-brand-purple/20 to-brand-accent/20 border border-brand-purple/40 text-white'
-                        : 'bg-white/5 text-gray-300 hover:text-white'
+                    onClick={() => setMobileOpen(false)}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
+                      active
+                        ? 'bg-violet-600/20 text-white border-l-2 border-violet-500'
+                        : 'text-zinc-400 hover:text-white hover:bg-white/5'
                     }`}
                   >
-                    <Icon className="w-4 h-4 text-brand-purple" />
-                    <span>{link.name}</span>
+                    <Icon className={`w-4 h-4 ${active ? 'text-violet-400' : ''}`} />
+                    {link.name}
                   </Link>
                 );
               })}
 
-              {/* Mobile Admin Link */}
               {isAdmin && (
                 <Link
                   href="/admin"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="col-span-2 flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-brand-purple to-brand-accent text-white font-semibold text-xs shadow-neon mt-1"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-3 px-3 py-2.5 mt-2 rounded-md text-sm font-medium bg-violet-600/30 text-violet-300 border border-violet-500/30"
                 >
                   <ShieldCheck className="w-4 h-4" />
-                  <span>Admin Studio Dashboard</span>
+                  Admin Studio
                 </Link>
               )}
             </div>

@@ -48,20 +48,24 @@ export default function AdminDashboardPage() {
       const data = await res.json();
 
       if (res.ok && data.success) {
+        // Store in both localStorage (for client-side UI checks) and cookie (for middleware)
         localStorage.setItem('smr_admin_session', 'authorized');
         localStorage.setItem('smr_admin_user', JSON.stringify(data.user));
         setIsAuthenticated(true);
       } else {
-        setErrorMsg(data.error || 'Invalid credentials. Please verify your email and password.');
+        setErrorMsg(data.error || 'Invalid credentials.');
       }
     } catch {
-      setErrorMsg('Failed to connect to authentication database server.');
+      setErrorMsg('Failed to connect to authentication server.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAdminLogout = () => {
+  const handleAdminLogout = async () => {
+    // Clear cookie server-side
+    await fetch('/api/auth/logout', { method: 'POST' });
+    // Clear localStorage
     localStorage.removeItem('smr_admin_session');
     localStorage.removeItem('smr_admin_user');
     setIsAuthenticated(false);

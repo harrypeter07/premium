@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
 
-// Admin Database User Store
 const ADMIN_USER = {
   email: 'admin@smriti.com',
-  password: 'wrongpassword', // Enforced admin credentials from request
+  password: 'wrongpassword',
   name: 'Smriti Shah Admin',
   role: 'ADMIN',
 };
@@ -17,15 +16,21 @@ export async function POST(req: Request) {
     }
 
     if (email.toLowerCase() === ADMIN_USER.email.toLowerCase() && password === ADMIN_USER.password) {
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: true,
-        user: {
-          email: ADMIN_USER.email,
-          name: ADMIN_USER.name,
-          role: ADMIN_USER.role,
-        },
-        token: `admin_session_${Date.now()}`,
+        user: { email: ADMIN_USER.email, name: ADMIN_USER.name, role: ADMIN_USER.role },
       });
+
+      // Set HTTP-only cookie for server-side middleware protection
+      response.cookies.set('smr_admin_session', 'authorized', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24, // 24 hours
+        path: '/',
+      });
+
+      return response;
     }
 
     return NextResponse.json({ error: 'Invalid email or password credentials.' }, { status: 401 });
