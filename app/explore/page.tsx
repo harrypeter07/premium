@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cleanOrGenerateTitle } from '@/lib/utils/captionHelper';
+import { getPersistentCollections } from '@/lib/storage/localStorage';
 
 export default function ExplorePage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -34,9 +35,18 @@ export default function ExplorePage() {
         ]);
 
         if (mediaData.media) setMediaList(mediaData.media);
-        if (colData.collections) setCollections(colData.collections);
+
+        let cols: CollectionItem[] = colData.collections || [];
+        const localCols = getPersistentCollections();
+        if (localCols.length > 0) {
+          const merged = [...cols, ...localCols.filter(lc => !cols.some(c => c.id === lc.id))];
+          cols = merged;
+        }
+        setCollections(cols);
       } catch (err) {
         console.error('Error fetching explore data:', err);
+        const localCols = getPersistentCollections();
+        if (localCols.length > 0) setCollections(localCols);
       } finally {
         setLoading(false);
       }

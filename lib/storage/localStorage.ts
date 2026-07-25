@@ -1,3 +1,5 @@
+import { CollectionItem } from '@/lib/types';
+
 export interface CommentItem {
   id: string;
   mediaId: string;
@@ -127,7 +129,7 @@ export function setRatingForMedia(mediaId: string, rating: number) {
   localStorage.setItem(`smr_rating_${mediaId}`, String(rating));
 }
 
-// Persistent Uploaded Media Storage (so uploaded images are NEVER lost on Vercel redeploys!)
+// Persistent Uploaded Media Storage
 export function getPersistentUploadedMedia(): any[] {
   if (typeof window === 'undefined') return [];
   try {
@@ -143,4 +145,20 @@ export function savePersistentUploadedMedia(items: any[]) {
   const current = getPersistentUploadedMedia();
   const merged = [...items, ...current.filter(c => !items.some(i => i.id === c.id))];
   localStorage.setItem('smr_uploaded_media', JSON.stringify(merged));
+}
+
+// Persistent Collections Storage
+export function getPersistentCollections(): CollectionItem[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const data = localStorage.getItem('smr_collections');
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function savePersistentCollections(collections: CollectionItem[]) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('smr_collections', JSON.stringify(collections));
 }

@@ -14,6 +14,7 @@ import { Card, CardTitle, CardDescription, CardContent, CardHeader, CardFooter }
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { getPersistentCollections, savePersistentCollections } from '@/lib/storage/localStorage';
 
 function setClientCookie(name: string, value: string, days = 1) {
   const expires = new Date(Date.now() + days * 864e5).toUTCString();
@@ -60,9 +61,18 @@ export default function AdminDashboardPage() {
     ])
       .then(([mediaData, colData]) => {
         if (mediaData.media) setMediaList(mediaData.media);
-        if (colData.collections) setCollectionsList(colData.collections);
+        let cols: CollectionItem[] = colData.collections || [];
+        const localCols = getPersistentCollections();
+        if (localCols.length > 0) {
+          const merged = [...cols, ...localCols.filter(lc => !cols.some(c => c.id === lc.id))];
+          cols = merged;
+        }
+        setCollectionsList(cols);
       })
-      .catch(() => {});
+      .catch(() => {
+        const localCols = getPersistentCollections();
+        if (localCols.length > 0) setCollectionsList(localCols);
+      });
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -145,7 +155,9 @@ export default function AdminDashboardPage() {
 
       const data = await res.json();
       if (res.ok && data.success) {
-        setCollectionsList([data.collection, ...collectionsList]);
+        const updatedList = [data.collection, ...collectionsList];
+        setCollectionsList(updatedList);
+        savePersistentCollections(updatedList);
         setShowCreateCollectionModal(false);
         setColName('');
         setColDesc('');
@@ -166,9 +178,9 @@ export default function AdminDashboardPage() {
     try {
       const res = await fetch(`/api/collections?id=${id}`, { method: 'DELETE' });
       const data = await res.json();
-      if (res.ok && data.collections) {
-        setCollectionsList(data.collections);
-      }
+      const updated = collectionsList.filter(c => c.id !== id);
+      setCollectionsList(updated);
+      savePersistentCollections(updated);
     } catch (err) {
       console.error('Failed to delete collection:', err);
     }
@@ -292,7 +304,7 @@ export default function AdminDashboardPage() {
           </Button>
         </div>
 
-        {/* Full-Bleed Cover Image Cards Grid with Dynamic Aspect Ratio */}
+        {/* Full-Bleed Cover Image Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {collectionsList.map((col) => (
             <div
