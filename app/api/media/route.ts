@@ -11,7 +11,7 @@ async function fetchFromImageKit(): Promise<MediaItem[]> {
     const privateKey = process.env.IMAGEKIT_PRIVATE_KEY || 'private_QEH6sevZJ316f5zVNCz8HGcWY8k=';
     const authHeader = 'Basic ' + Buffer.from(privateKey + ':').toString('base64');
 
-    const res = await fetch('https://api.imagekit.io/v1/files?sort=DESC&limit=50', {
+    const res = await fetch('https://api.imagekit.io/v1/files?limit=100', {
       headers: {
         Authorization: authHeader,
       },
@@ -38,7 +38,7 @@ async function fetchFromImageKit(): Promise<MediaItem[]> {
         description,
         type: isVideo ? 'VIDEO' : 'IMAGE',
         url: file.url,
-        thumbnailUrl: file.thumbnailUrl || file.url,
+        thumbnailUrl: file.thumbnail || file.url,
         altText: title,
         width: file.width || 1200,
         height: file.height || 1600,
@@ -171,12 +171,9 @@ export async function POST(req: Request) {
       tags: tags || ['SmritiShah', 'Editorial'],
     };
 
-    // Save to in-memory store
     inMemoryMedia.unshift(newMediaItem);
 
-    // Save to Supabase Database via Prisma Client
     try {
-      // Ensure category exists in DB
       const catSlug = categorySlug || 'fashion';
       const catName = catSlug.charAt(0).toUpperCase() + catSlug.slice(1);
       
