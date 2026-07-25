@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Sparkles, Compass, Video, Image as ImageIcon, User,
+  Sparkles, Compass, Folder, Video, Image as ImageIcon, User,
   ShieldCheck, Menu, X, Search, Bookmark
 } from 'lucide-react';
 import { getSavedBookmarks } from '@/lib/storage/localStorage';
@@ -42,6 +42,7 @@ export default function Navbar({ onOpenSearch }: { onOpenSearch?: () => void }) 
   const navLinks = [
     { name: 'Feed', href: '/', icon: Sparkles },
     { name: 'Explore', href: '/explore', icon: Compass },
+    { name: 'Collections', href: '/collections', icon: Folder },
     { name: 'Videos', href: '/videos', icon: Video },
     { name: 'Photos', href: '/images', icon: ImageIcon },
     { name: 'Creator', href: '/creator', icon: User },

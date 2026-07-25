@@ -219,3 +219,31 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Failed to save media upload' }, { status: 500 });
   }
 }
+
+export async function DELETE(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'Media ID is required' }, { status: 400 });
+    }
+
+    inMemoryMedia = inMemoryMedia.filter((m) => m.id !== id && m.url !== id);
+
+    try {
+      await db.media.deleteMany({
+        where: {
+          OR: [{ id }, { url: id }],
+        },
+      });
+    } catch (prismaErr) {
+      console.warn('Prisma DB delete fallback:', prismaErr);
+    }
+
+    return NextResponse.json({ success: true, message: 'Media item deleted' });
+  } catch (err) {
+    console.error('Error deleting media item:', err);
+    return NextResponse.json({ error: 'Failed to delete media item' }, { status: 500 });
+  }
+}
