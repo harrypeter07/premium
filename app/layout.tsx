@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import type { Metadata, Viewport } from 'next';
 import Navbar from '@/components/ui/Navbar';
 import Footer from '@/components/ui/Footer';
 import AdSenseSlot from '@/components/monetization/AdSenseSlot';
 import GDPRConsentBanner from '@/components/ui/gdpr-banner';
+import AnalyticsTracker from '@/components/analytics/AnalyticsTracker';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import './globals.css';
 
@@ -35,6 +36,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="bg-[#120e1d] text-gray-100 min-h-screen flex flex-col antialiased selection:bg-brand-purple selection:text-white">
         <TooltipProvider>
+          {/* Automatic Client Analytics Tracker */}
+          <Suspense fallback={null}>
+            <AnalyticsTracker />
+          </Suspense>
+
           {/* Navigation Bar */}
           <Navbar />
 

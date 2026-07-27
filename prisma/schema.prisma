@@ -146,14 +146,18 @@ model History {
 
 model AnalyticsEvent {
   id          String   @id @default(cuid())
-  type        String
+  type        String   // PAGE_VIEW, NAVIGATION, HEARTBEAT, MEDIA_VIEW
   path        String
+  fromPath    String?
   referrer    String?
+  visitorId   String?  // Device Fingerprint UUID
   country     String?
+  region      String?
   city        String?
-  device      String?
-  browser     String?
-  os          String?
+  device      String?  // Desktop / Mobile / Tablet
+  browser     String?  // Chrome, Safari, Firefox, Edge, Opera
+  os          String?  // Windows, macOS, iOS, Android, Linux
+  screen      String?  // e.g. 1920x1080
   duration    Float?
   scrollDepth Float?
   mediaId     String?
@@ -161,6 +165,7 @@ model AnalyticsEvent {
   createdAt   DateTime @default(now())
 
   @@index([type])
+  @@index([visitorId])
   @@index([createdAt])
 }
 
