@@ -151,7 +151,10 @@ export async function GET(req: Request) {
     [...inMemoryMedia, ...dbItems, ...imageKitItems].forEach((item) => {
       if (!combinedMap.has(item.id) && !combinedMap.has(item.url)) {
         // Map premium details using URL for 100% reliable matching across databases and imagekit listing
-        const price = premiumMap[item.url] || 'FREE';
+        let price = premiumMap[item.url] || 'FREE';
+        if (price.includes('$')) {
+          price = price.replace('$', '₹').replace('9.99', '99');
+        }
         combinedMap.set(item.url, {
           ...item,
           isPremium: price !== 'FREE',
