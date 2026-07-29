@@ -28,7 +28,7 @@ export default function AdSenseSlot({
 
   if (type === 'STICKY_ANCHOR') {
     return (
-      <aside aria-label="Advertisement" className="fixed bottom-0 left-0 right-0 z-40 bg-[#120e1d]/90 backdrop-blur-xl border-t border-brand-purple/20 py-1 shadow-2xl flex items-center justify-center">
+      <aside aria-label="Advertisement" className="hidden md:flex fixed bottom-0 left-0 right-0 z-40 bg-[#120e1d]/90 backdrop-blur-xl border-t border-brand-purple/20 py-1 shadow-2xl items-center justify-center">
         <div className="max-w-7xl mx-auto w-full px-4 flex justify-center items-center">
           {/* Dynamic Google AdSense Anchor / Sticky Ad unit */}
           <ins

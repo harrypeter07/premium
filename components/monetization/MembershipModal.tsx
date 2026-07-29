@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Crown, Check, Heart, Sparkles, Zap } from 'lucide-react';
+import { X, Crown, Check, Heart, Sparkles } from 'lucide-react';
 
 interface MembershipModalProps {
   isOpen: boolean;
@@ -11,9 +11,80 @@ interface MembershipModalProps {
 
 export default function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
   const [selectedPlan, setSelectedPlan] = useState<'supporter' | 'vip' | 'collector'>('vip');
-  const [tipAmount, setTipAmount] = useState<number>(25);
+  const [tipAmount, setTipAmount] = useState<number>(250);
 
   if (!isOpen) return null;
+
+  const handlePlanClick = async (plan: 'supporter' | 'vip' | 'collector') => {
+    setSelectedPlan(plan);
+    
+    // Log CREATOR_APP_CLICK in Analytics database
+    try {
+      const visitorId = localStorage.getItem('smr_visitor_id') || 'anon';
+      await fetch('/api/analytics/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'CREATOR_APP_CLICK',
+          path: window.location.pathname,
+          visitorId,
+          referrer: `Tier Card: ${plan}`,
+        }),
+      });
+    } catch (err) {
+      console.error('Failed to track creator app click:', err);
+    }
+
+    // Redirect to Creator App website
+    window.open('https://smritishans.mywebsite.social/', '_blank');
+  };
+
+  const handleCtaClick = async () => {
+    // Log CREATOR_APP_CLICK in Analytics database
+    try {
+      const visitorId = localStorage.getItem('smr_visitor_id') || 'anon';
+      await fetch('/api/analytics/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'CREATOR_APP_CLICK',
+          path: window.location.pathname,
+          visitorId,
+          referrer: `CTA Button: ${selectedPlan}`,
+        }),
+      });
+    } catch (err) {
+      console.error('Failed to track creator app click:', err);
+    }
+
+    // Redirect to Creator App website
+    window.open('https://smritishans.mywebsite.social/', '_blank');
+    onClose();
+  };
+
+  const handleTipClick = async (amt: number) => {
+    setTipAmount(amt);
+
+    // Log CREATOR_APP_CLICK in Analytics database
+    try {
+      const visitorId = localStorage.getItem('smr_visitor_id') || 'anon';
+      await fetch('/api/analytics/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'CREATOR_APP_CLICK',
+          path: window.location.pathname,
+          visitorId,
+          referrer: `Tip Jar: ₹${amt}`,
+        }),
+      });
+    } catch (err) {
+      console.error('Failed to track creator app click:', err);
+    }
+
+    // Redirect to Creator App website
+    window.open('https://smritishans.mywebsite.social/', '_blank');
+  };
 
   return (
     <AnimatePresence>
@@ -22,7 +93,7 @@ export default function MembershipModal({ isOpen, onClose }: MembershipModalProp
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className="relative w-full max-w-3xl bg-dark-surface border border-brand-purple/40 rounded-3xl p-6 sm:p-8 shadow-2xl my-auto text-white overflow-hidden"
+          className="relative w-full max-w-3xl bg-zinc-950 border border-brand-purple/40 rounded-3xl p-6 sm:p-8 shadow-2xl my-auto text-white overflow-hidden"
         >
           {/* Top Decorative Glow */}
           <div className="absolute top-0 right-0 w-80 h-80 bg-brand-purple/20 blur-[100px] pointer-events-none" />
@@ -51,7 +122,7 @@ export default function MembershipModal({ isOpen, onClose }: MembershipModalProp
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
             {/* Supporter Tier */}
             <div
-              onClick={() => setSelectedPlan('supporter')}
+              onClick={() => handlePlanClick('supporter')}
               className={`p-5 rounded-2xl cursor-pointer border transition-all ${
                 selectedPlan === 'supporter'
                   ? 'bg-brand-purple/10 border-brand-purple shadow-neon'
@@ -59,7 +130,7 @@ export default function MembershipModal({ isOpen, onClose }: MembershipModalProp
               }`}
             >
               <h3 className="font-bold text-sm text-white mb-1">Supporter</h3>
-              <p className="font-display font-extrabold text-xl text-white mb-3">$9<span className="text-xs font-normal text-gray-400">/mo</span></p>
+              <p className="font-display font-extrabold text-xl text-white mb-3">₹99<span className="text-xs font-normal text-gray-400">/mo</span></p>
               <ul className="space-y-2 text-xs text-gray-300">
                 <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-brand-purple" /> 4K Ultra HD Streaming</li>
                 <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-brand-purple" /> Ad-Free Experience</li>
@@ -69,7 +140,7 @@ export default function MembershipModal({ isOpen, onClose }: MembershipModalProp
 
             {/* VIP All-Access */}
             <div
-              onClick={() => setSelectedPlan('vip')}
+              onClick={() => handlePlanClick('vip')}
               className={`relative p-5 rounded-2xl cursor-pointer border transition-all ${
                 selectedPlan === 'vip'
                   ? 'bg-gradient-to-b from-brand-purple/30 to-brand-accent/20 border-brand-accent shadow-neon'
@@ -80,7 +151,7 @@ export default function MembershipModal({ isOpen, onClose }: MembershipModalProp
                 Most Popular
               </span>
               <h3 className="font-bold text-sm text-white mb-1">VIP All-Access</h3>
-              <p className="font-display font-extrabold text-xl text-white mb-3">$29<span className="text-xs font-normal text-gray-400">/mo</span></p>
+              <p className="font-display font-extrabold text-xl text-white mb-3">₹299<span className="text-xs font-normal text-gray-400">/mo</span></p>
               <ul className="space-y-2 text-xs text-gray-300">
                 <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-brand-accent" /> All Supporter Perks</li>
                 <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-brand-accent" /> Unedited Editorial Raw Cuts</li>
@@ -90,7 +161,7 @@ export default function MembershipModal({ isOpen, onClose }: MembershipModalProp
 
             {/* Collector VIP */}
             <div
-              onClick={() => setSelectedPlan('collector')}
+              onClick={() => handlePlanClick('collector')}
               className={`p-5 rounded-2xl cursor-pointer border transition-all ${
                 selectedPlan === 'collector'
                   ? 'bg-brand-purple/10 border-brand-purple shadow-neon'
@@ -98,7 +169,7 @@ export default function MembershipModal({ isOpen, onClose }: MembershipModalProp
               }`}
             >
               <h3 className="font-bold text-sm text-white mb-1">Collector Patron</h3>
-              <p className="font-display font-extrabold text-xl text-white mb-3">$99<span className="text-xs font-normal text-gray-400">/mo</span></p>
+              <p className="font-display font-extrabold text-xl text-white mb-3">₹999<span className="text-xs font-normal text-gray-400">/mo</span></p>
               <ul className="space-y-2 text-xs text-gray-300">
                 <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-brand-purple" /> Signed Archival Fine Art Print</li>
                 <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-brand-purple" /> Direct Producer Access</li>
@@ -119,15 +190,15 @@ export default function MembershipModal({ isOpen, onClose }: MembershipModalProp
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {[10, 25, 50, 100].map((amt) => (
+              {[100, 250, 500, 1000].map((amt) => (
                 <button
                   key={amt}
-                  onClick={() => setTipAmount(amt)}
+                  onClick={() => handleTipClick(amt)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                     tipAmount === amt ? 'bg-brand-accent text-white shadow-neon' : 'bg-white/5 text-gray-300 hover:bg-white/10'
                   }`}
                 >
-                  ${amt}
+                  ₹{amt}
                 </button>
               ))}
             </div>
@@ -135,10 +206,7 @@ export default function MembershipModal({ isOpen, onClose }: MembershipModalProp
 
           {/* Action CTA */}
           <button
-            onClick={() => {
-              alert(`Subscribing to ${selectedPlan.toUpperCase()} membership plan with $${tipAmount} tip gesture!`);
-              onClose();
-            }}
+            onClick={handleCtaClick}
             className="w-full py-4 rounded-2xl bg-gradient-to-r from-brand-purple to-brand-accent text-white font-bold text-sm shadow-neon hover:opacity-90 transition-all flex items-center justify-center gap-2"
           >
             <Crown className="w-4 h-4" />
