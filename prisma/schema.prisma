@@ -137,7 +137,7 @@ model History {
   watchedSeconds Float    @default(0)
   completionRate Float    @default(0)
   user           User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  media          Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  media      Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
   viewedAt       DateTime @default(now())
 
   @@index([userId])
@@ -205,4 +205,9 @@ model AdPlacement {
   impressionCount Int      @default(0)
   clickCount      Int      @default(0)
   createdAt       DateTime @default(now())
+}
+
+model SystemConfig {
+  key   String @id
+  value String
 }
