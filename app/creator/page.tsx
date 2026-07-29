@@ -13,14 +13,14 @@ export default function CreatorPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Profile State
+  // Dynamic Profile State (no hardcoded URLs)
   const [profile, setProfile] = useState({
     name: 'Smriti Shah',
     role: 'Haute Couture Model & Visual Storyteller',
     location: 'Mumbai · Paris · London',
     bio: 'Smriti Shah (@smriti.shans) is an international visual artist, fashion model, and storyteller. She curates high-resolution fine art imagery, editorial films, and exclusive behind-the-scenes archives.',
-    coverUrl: 'https://ik.imagekit.io/epe7dzmjg/smr-portfolio/ChatGPT_Image_Jul_6__2026__04_18_46_AM_ymWxAKXY7.png?updatedAt=1785319456226',
-    avatarUrl: 'https://ik.imagekit.io/epe7dzmjg/smr-portfolio/ChatGPT_Image_Jun_2__2026__05_06_57_PM_GqOx_TQBy.png?updatedAt=1785319463919',
+    coverUrl: '',
+    avatarUrl: '',
   });
 
   const [editCoverFile, setEditCoverFile] = useState<File | null>(null);
@@ -32,7 +32,7 @@ export default function CreatorPage() {
   useEffect(() => {
     setIsAdmin(localStorage.getItem('smr_admin_session') === 'authorized');
     
-    // Fetch Server Persisted Creator Profile
+    // Dynamically Fetch Creator Profile from ImageKit API via /api/creator/profile
     fetch('/api/creator/profile')
       .then(res => res.json())
       .then(data => {
@@ -60,6 +60,7 @@ export default function CreatorPage() {
       if (editCoverFile) {
         const formData = new FormData();
         formData.append('file', editCoverFile);
+        formData.append('purpose', 'creator_cover'); // Tags file and purges old cover in ImageKit
         const res = await fetch('/api/media/upload', { method: 'POST', body: formData });
         const data = await res.json();
         if (data.url) newCoverUrl = data.url;
@@ -68,6 +69,7 @@ export default function CreatorPage() {
       if (editAvatarFile) {
         const formData = new FormData();
         formData.append('file', editAvatarFile);
+        formData.append('purpose', 'creator_avatar'); // Tags file and purges old avatar in ImageKit
         const res = await fetch('/api/media/upload', { method: 'POST', body: formData });
         const data = await res.json();
         if (data.url) newAvatarUrl = data.url;
@@ -82,7 +84,7 @@ export default function CreatorPage() {
       setProfile(updated);
       localStorage.setItem('smr_creator_profile', JSON.stringify(updated));
 
-      // Post update to Server API so all visitors see the new profile images!
+      // Post update to Server API
       await fetch('/api/creator/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -110,7 +112,9 @@ export default function CreatorPage() {
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 pb-16">
       {/* Cover Header Stage */}
       <div className="relative rounded-3xl overflow-hidden glass-panel border border-white/10 h-72 sm:h-96 shadow-2xl bg-zinc-950">
-        <img src={editCoverPreview || profile.coverUrl} alt="Cover" className="w-full h-full object-cover" />
+        {(editCoverPreview || profile.coverUrl) && (
+          <img src={editCoverPreview || profile.coverUrl} alt="Cover" className="w-full h-full object-cover" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-[#08070b] via-[#08070b]/40 to-transparent" />
 
         {/* Admin Cover Upload Button */}
@@ -139,7 +143,9 @@ export default function CreatorPage() {
       <div className="relative -mt-24 sm:-mt-32 z-10 px-4 sm:px-8 flex flex-col sm:flex-row items-center sm:items-end justify-between gap-6">
         <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6 text-center sm:text-left w-full sm:w-auto">
           <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-3xl p-1 bg-gradient-to-tr from-violet-600 to-fuchsia-500 shadow-neon relative group">
-            <img src={editAvatarPreview || profile.avatarUrl} alt={profile.name} className="w-full h-full object-cover rounded-[22px]" />
+            {(editAvatarPreview || profile.avatarUrl) && (
+              <img src={editAvatarPreview || profile.avatarUrl} alt={profile.name} className="w-full h-full object-cover rounded-[22px]" />
+            )}
             {isAdmin && isEditing && (
               <label className="absolute inset-0 bg-black/60 backdrop-blur-sm rounded-[22px] flex flex-col items-center justify-center text-white text-xs cursor-pointer opacity-90 hover:opacity-100 transition-opacity">
                 <Upload className="w-6 h-6 mb-1 text-violet-400" />
