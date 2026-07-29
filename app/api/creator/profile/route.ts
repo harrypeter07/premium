@@ -6,8 +6,8 @@ let memoryProfileText = {
   role: 'Haute Couture Model & Visual Storyteller',
   location: 'Mumbai · Paris · London',
   bio: 'Smriti Shah (@smriti.shans) is an international visual artist, fashion model, and storyteller. She curates high-resolution fine art imagery, editorial films, and exclusive behind-the-scenes archives.',
-  coverUrl: 'https://ik.imagekit.io/epe7dzmjg/smr-portfolio/ChatGPT_Image_Jul_6__2026__04_18_46_AM_ymWxAKXY7.png?updatedAt=1785319456226',
-  avatarUrl: 'https://ik.imagekit.io/epe7dzmjg/smr-portfolio/ChatGPT_Image_Jun_2__2026__05_06_57_PM_GqOx_TQBy.png?updatedAt=1785319463919',
+  coverUrl: '',
+  avatarUrl: '',
 };
 
 export async function GET() {
@@ -67,8 +67,8 @@ export async function GET() {
       success: true,
       profile: {
         ...memoryProfileText,
-        coverUrl: coverUrl || memoryProfileText.coverUrl,
-        avatarUrl: avatarUrl || memoryProfileText.avatarUrl,
+        coverUrl,
+        avatarUrl,
       },
     });
   } catch (err) {
