@@ -27,7 +27,9 @@ export default function MediaCard({ media, onSelect, priority = false }: MediaCa
   const [isDeleted, setIsDeleted] = useState(false);
   const [showHeartBurst, setShowHeartBurst] = useState(false);
   
-  // Premium unlock states
+  // Premium lock and price state
+  const [localIsPremium, setLocalIsPremium] = useState(media.isPremium);
+  const [localPrice, setLocalPrice] = useState(media.price || 'FREE');
   const [isMembershipOpen, setIsMembershipOpen] = useState(false);
 
   useEffect(() => {
@@ -35,7 +37,9 @@ export default function MediaCard({ media, onSelect, priority = false }: MediaCa
     setIsBookmarked(getSavedBookmarks().includes(media.id));
     setIsLiked(getSavedLikes().includes(media.id));
     setIsAdmin(localStorage.getItem('smr_admin_session') === 'authorized');
-  }, [media.id]);
+    setLocalIsPremium(media.isPremium);
+    setLocalPrice(media.price || 'FREE');
+  }, [media.id, media]);
 
   if (isDeleted) return null;
 
@@ -69,6 +73,47 @@ export default function MediaCard({ media, onSelect, priority = false }: MediaCa
       setIsDeleted(true);
     } catch (err) {
       console.error('Failed to delete item:', err);
+    }
+  };
+
+  const handleTogglePremium = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    const targetPremium = !localIsPremium;
+    let targetPrice = localPrice;
+
+    if (targetPremium) {
+      const inputPrice = prompt("Enter unlock price for this premium post:", "$9.99");
+      if (inputPrice === null) return; // Cancelled
+      targetPrice = inputPrice.trim() || '$9.99';
+    } else {
+      targetPrice = 'FREE';
+    }
+
+    // Optimistic UI update
+    setLocalIsPremium(targetPremium);
+    setLocalPrice(targetPrice);
+
+    try {
+      const res = await fetch('/api/media/premium', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: media.url,
+          isPremium: targetPremium,
+          price: targetPrice,
+        }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setLocalIsPremium(!targetPremium);
+        setLocalPrice(localPrice);
+        alert('Failed to update premium status');
+      }
+    } catch (err) {
+      setLocalIsPremium(!targetPremium);
+      setLocalPrice(localPrice);
+      console.error(err);
     }
   };
 
@@ -109,7 +154,7 @@ export default function MediaCard({ media, onSelect, priority = false }: MediaCa
     setIsMembershipOpen(true);
   };
 
-  const isLocked = media.isPremium && !isAdmin;
+  const isLocked = localIsPremium && !isAdmin;
   const formattedUrl = getCloudflareImageUrl(media.thumbnailUrl, 800);
 
   return (
@@ -187,7 +232,7 @@ export default function MediaCard({ media, onSelect, priority = false }: MediaCa
                   Premium Locked
                 </Badge>
                 <h4 className="text-white font-bold text-sm line-clamp-1">{media.title}</h4>
-                <p className="text-xs text-amber-300 font-semibold">{media.price || '$9.99'} to Unlock</p>
+                <p className="text-xs text-amber-300 font-semibold">{localPrice} to Unlock</p>
               </div>
 
               <Button
@@ -213,6 +258,21 @@ export default function MediaCard({ media, onSelect, priority = false }: MediaCa
             </span>
 
             <div className="flex items-center gap-1.5">
+              {/* Admin Toggle Premium Button */}
+              {mounted && isAdmin && (
+                <button
+                  onClick={handleTogglePremium}
+                  className={`p-2 rounded-full border transition-all ${
+                    localIsPremium 
+                      ? 'bg-amber-500/25 text-amber-400 border-amber-500/40 shadow-[0_0_15px_rgba(245,158,11,0.35)]' 
+                      : 'glass-panel border-white/10 text-white/60 hover:text-amber-400 hover:border-amber-500/30'
+                  }`}
+                  title={localIsPremium ? "Make Free (Admin)" : "Make Premium (Admin)"}
+                >
+                  <Crown className="w-3.5 h-3.5" />
+                </button>
+              )}
+
               {/* Admin Delete Button */}
               {mounted && isAdmin && (
                 <button
