@@ -19,8 +19,8 @@ export default function CreatorPage() {
     role: 'Haute Couture Model & Visual Storyteller',
     location: 'Mumbai · Paris · London',
     bio: 'Smriti Shah (@smriti.shans) is an international visual artist, fashion model, and storyteller. She curates high-resolution fine art imagery, editorial films, and exclusive behind-the-scenes archives.',
-    coverUrl: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1600&q=80',
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80',
+    coverUrl: 'https://ik.imagekit.io/epe7dzmjg/smr-portfolio/ChatGPT_Image_Jul_6__2026__04_18_46_AM_ymWxAKXY7.png?updatedAt=1785319456226',
+    avatarUrl: 'https://ik.imagekit.io/epe7dzmjg/smr-portfolio/ChatGPT_Image_Jun_2__2026__05_06_57_PM_GqOx_TQBy.png?updatedAt=1785319463919',
   });
 
   const [editCoverFile, setEditCoverFile] = useState<File | null>(null);
@@ -31,12 +31,24 @@ export default function CreatorPage() {
 
   useEffect(() => {
     setIsAdmin(localStorage.getItem('smr_admin_session') === 'authorized');
-    const saved = localStorage.getItem('smr_creator_profile');
-    if (saved) {
-      try {
-        setProfile(JSON.parse(saved));
-      } catch {}
-    }
+    
+    // Fetch Server Persisted Creator Profile
+    fetch('/api/creator/profile')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.profile) {
+          setProfile(data.profile);
+          localStorage.setItem('smr_creator_profile', JSON.stringify(data.profile));
+        }
+      })
+      .catch(() => {
+        const saved = localStorage.getItem('smr_creator_profile');
+        if (saved) {
+          try {
+            setProfile(JSON.parse(saved));
+          } catch {}
+        }
+      });
   }, []);
 
   const handleSaveProfile = async () => {
@@ -69,7 +81,19 @@ export default function CreatorPage() {
 
       setProfile(updated);
       localStorage.setItem('smr_creator_profile', JSON.stringify(updated));
+
+      // Post update to Server API so all visitors see the new profile images!
+      await fetch('/api/creator/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated),
+      });
+
       setIsEditing(false);
+      setEditCoverFile(null);
+      setEditCoverPreview('');
+      setEditAvatarFile(null);
+      setEditAvatarPreview('');
     } catch (err) {
       console.error('Failed to save profile:', err);
     } finally {
