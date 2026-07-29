@@ -50,11 +50,11 @@ export async function GET() {
     };
 
     try {
-      const configRecord = await db.category.findUnique({
-        where: { slug: 'creator-profile-config' },
+      const configRecord = await db.systemConfig.findUnique({
+        where: { key: 'creator_profile_config' },
       });
-      if (configRecord && configRecord.description) {
-        const parsed = JSON.parse(configRecord.description);
+      if (configRecord && configRecord.value) {
+        const parsed = JSON.parse(configRecord.value);
         profileData = {
           name: parsed.name || 'Smriti Shah',
           role: parsed.role || '',
@@ -96,15 +96,14 @@ export async function POST(req: Request) {
     });
 
     try {
-      await db.category.upsert({
-        where: { slug: 'creator-profile-config' },
+      await db.systemConfig.upsert({
+        where: { key: 'creator_profile_config' },
         update: {
-          description: payload,
+          value: payload,
         },
         create: {
-          name: 'Creator Profile Config System Record',
-          slug: 'creator-profile-config',
-          description: payload,
+          key: 'creator_profile_config',
+          value: payload,
         },
       });
     } catch (dbErr) {

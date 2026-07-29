@@ -9,13 +9,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Media URL is required' }, { status: 400 });
     }
 
-    const configRecord = await db.category.findUnique({
-      where: { slug: 'creator-profile-config' },
+    const configRecord = await db.systemConfig.findUnique({
+      where: { key: 'premium_map_config' },
     });
 
     let parsed = { premiumMap: {} as Record<string, string> };
-    if (configRecord && configRecord.description) {
-      parsed = JSON.parse(configRecord.description);
+    if (configRecord && configRecord.value) {
+      parsed = JSON.parse(configRecord.value);
       if (!parsed.premiumMap) parsed.premiumMap = {};
     }
 
@@ -27,13 +27,12 @@ export async function POST(req: Request) {
       }
     }
 
-    await db.category.upsert({
-      where: { slug: 'creator-profile-config' },
-      update: { description: JSON.stringify(parsed) },
+    await db.systemConfig.upsert({
+      where: { key: 'premium_map_config' },
+      update: { value: JSON.stringify(parsed) },
       create: {
-        name: 'Creator Profile Config System Record',
-        slug: 'creator-profile-config',
-        description: JSON.stringify(parsed),
+        key: 'premium_map_config',
+        value: JSON.stringify(parsed),
       },
     });
 

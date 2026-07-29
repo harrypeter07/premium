@@ -108,11 +108,12 @@ export default function MediaCard({ media, onSelect, priority = false }: MediaCa
       if (!data.success) {
         setLocalIsPremium(!targetPremium);
         setLocalPrice(localPrice);
-        alert('Failed to update premium status');
+        alert('Failed to update premium status: ' + (data.error || 'Unknown Error'));
       }
-    } catch (err) {
+    } catch (err: any) {
       setLocalIsPremium(!targetPremium);
       setLocalPrice(localPrice);
+      alert('Failed to update premium status: ' + (err.message || 'Network Error'));
       console.error(err);
     }
   };

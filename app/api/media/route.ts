@@ -122,14 +122,14 @@ export async function GET(req: Request) {
     // Fetch directly from ImageKit API
     const imageKitItems = await fetchFromImageKit();
 
-    // Fetch premium map config from database
+    // Fetch premium map config from database SystemConfig
     let premiumMap: Record<string, string> = {};
     try {
-      const configRecord = await db.category.findUnique({
-        where: { slug: 'creator-profile-config' },
+      const configRecord = await db.systemConfig.findUnique({
+        where: { key: 'premium_map_config' },
       });
-      if (configRecord && configRecord.description) {
-        const parsed = JSON.parse(configRecord.description);
+      if (configRecord && configRecord.value) {
+        const parsed = JSON.parse(configRecord.value);
         premiumMap = parsed.premiumMap || {};
       }
     } catch (e) {}
@@ -209,25 +209,24 @@ export async function POST(req: Request) {
 
     inMemoryMedia.unshift(newMediaItem);
 
-    // Save premium config mapping to db Category record using URL for reliable matching
+    // Save premium config mapping to db SystemConfig record using URL for reliable matching
     try {
-      const configRecord = await db.category.findUnique({
-        where: { slug: 'creator-profile-config' },
+      const configRecord = await db.systemConfig.findUnique({
+        where: { key: 'premium_map_config' },
       });
       let parsed = { premiumMap: {} as Record<string, string> };
-      if (configRecord && configRecord.description) {
-        parsed = JSON.parse(configRecord.description);
+      if (configRecord && configRecord.value) {
+        parsed = JSON.parse(configRecord.value);
         if (!parsed.premiumMap) parsed.premiumMap = {};
       }
       parsed.premiumMap[url] = itemPrice;
 
-      await db.category.upsert({
-        where: { slug: 'creator-profile-config' },
-        update: { description: JSON.stringify(parsed) },
+      await db.systemConfig.upsert({
+        where: { key: 'premium_map_config' },
+        update: { value: JSON.stringify(parsed) },
         create: {
-          name: 'Creator Profile Config System Record',
-          slug: 'creator-profile-config',
-          description: JSON.stringify(parsed),
+          key: 'premium_map_config',
+          value: JSON.stringify(parsed),
         },
       });
     } catch (e) {
@@ -306,17 +305,17 @@ export async function DELETE(req: Request) {
 
     // Delete premium config mapping if present using both ID and URL
     try {
-      const configRecord = await db.category.findUnique({
-        where: { slug: 'creator-profile-config' },
+      const configRecord = await db.systemConfig.findUnique({
+        where: { key: 'premium_map_config' },
       });
-      if (configRecord && configRecord.description) {
-        const parsed = JSON.parse(configRecord.description);
+      if (configRecord && configRecord.value) {
+        const parsed = JSON.parse(configRecord.value);
         if (parsed.premiumMap) {
           if (parsed.premiumMap[id]) delete parsed.premiumMap[id];
           if (mediaUrl && parsed.premiumMap[mediaUrl]) delete parsed.premiumMap[mediaUrl];
-          await db.category.update({
-            where: { slug: 'creator-profile-config' },
-            data: { description: JSON.stringify(parsed) },
+          await db.systemConfig.update({
+            where: { key: 'premium_map_config' },
+            data: { value: JSON.stringify(parsed) },
           });
         }
       }
