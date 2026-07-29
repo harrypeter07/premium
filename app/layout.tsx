@@ -11,6 +11,13 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'Smriti Shah (@smriti.shans) | Visual Archives & High-Fashion Editorials',
   description: 'High-resolution visual archives, haute couture editorial films, travel diaries, and minimal aesthetics by Smriti Shah (@smriti.shans).',
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+    ],
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
+  },
 };
 
 export const viewport: Viewport = {
@@ -26,6 +33,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         {/* Literal Hardcoded Google AdSense Site Verification Meta Tag */}
         <meta name="google-adsense-account" content="ca-pub-4236633699270444" />
+
+        {/* Favicon Icon Link */}
+        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
 
         {/* Literal Hardcoded Google AdSense Auto-Ads Script Snippet */}
         <script

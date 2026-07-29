@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Luxury Gradient -->
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="50%" stop-color="#4c1d95"/>
+      <stop offset="100%" stop-color="#d946ef"/>
+    </linearGradient>
+
+    <!-- Text Gold/White Gradient -->
+    <linearGradient id="text-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f5d0fe"/>
+    </linearGradient>
+
+    <!-- Glowing Drop Shadow -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="16" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Outer Canvas Background with Curved Corners -->
+  <rect width="512" height="512" rx="128" fill="#0d0917"/>
+  
+  <!-- Glowing Hexagon/Square Container -->
+  <rect x="32" y="32" width="448" height="448" rx="100" fill="url(#bg-grad)" filter="url(#glow)"/>
+
+  <!-- Inner Dark Vignette Overlay -->
+  <rect x="48" y="48" width="416" height="416" rx="88" fill="#120e1d" fill-opacity="0.25" stroke="#ffffff" stroke-opacity="0.2" stroke-width="4"/>
+
+  <!-- Smriti Shah SS Monogram Typography -->
+  <text x="256" y="335" 
+        font-family="-apple-system, BlinkMacSystemFont, 'Didot', 'Playfair Display', 'Cinzel', serif" 
+        font-weight="900" 
+        font-size="240" 
+        letter-spacing="-12" 
+        text-anchor="middle" 
+        fill="url(#text-grad)">SS</text>
+
+  <!-- Sparkle Star Top Accent -->
+  <path d="M 370 110 L 380 140 L 410 150 L 380 160 L 370 190 L 360 160 L 330 150 L 360 140 Z" fill="#f472b6"/>
+  <circle cx="140" cy="380" r="8" fill="#c084fc"/>
+</svg>
