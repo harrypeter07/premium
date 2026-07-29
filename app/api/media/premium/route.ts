@@ -31,7 +31,7 @@ export async function POST(req: Request) {
       where: { slug: 'creator-profile-config' },
       update: { description: JSON.stringify(parsed) },
       create: {
-        name: 'Smriti Shah',
+        name: 'Creator Profile Config System Record',
         slug: 'creator-profile-config',
         description: JSON.stringify(parsed),
       },

@@ -56,7 +56,7 @@ export async function GET() {
       if (configRecord && configRecord.description) {
         const parsed = JSON.parse(configRecord.description);
         profileData = {
-          name: configRecord.name || 'Smriti Shah',
+          name: parsed.name || 'Smriti Shah',
           role: parsed.role || '',
           location: parsed.location || '',
           bio: parsed.bio || '',
@@ -89,6 +89,7 @@ export async function POST(req: Request) {
     const { name, role, location, bio } = body;
 
     const payload = JSON.stringify({
+      name: name || 'Smriti Shah',
       role: role || '',
       location: location || '',
       bio: bio || '',
@@ -98,11 +99,10 @@ export async function POST(req: Request) {
       await db.category.upsert({
         where: { slug: 'creator-profile-config' },
         update: {
-          name: name || 'Smriti Shah',
           description: payload,
         },
         create: {
-          name: name || 'Smriti Shah',
+          name: 'Creator Profile Config System Record',
           slug: 'creator-profile-config',
           description: payload,
         },
