@@ -139,7 +139,8 @@ export async function GET(req: Request) {
 
     [...inMemoryMedia, ...dbItems, ...imageKitItems].forEach((item) => {
       if (!combinedMap.has(item.id) && !combinedMap.has(item.url)) {
-        const price = premiumMap[item.id] || 'FREE';
+        // Map premium details using URL for 100% reliable matching across databases and imagekit listing
+        const price = premiumMap[item.url] || 'FREE';
         combinedMap.set(item.url, {
           ...item,
           isPremium: price !== 'FREE',
@@ -208,7 +209,7 @@ export async function POST(req: Request) {
 
     inMemoryMedia.unshift(newMediaItem);
 
-    // Save premium config mapping to db Category record
+    // Save premium config mapping to db Category record using URL for reliable matching
     try {
       const configRecord = await db.category.findUnique({
         where: { slug: 'creator-profile-config' },
@@ -218,7 +219,7 @@ export async function POST(req: Request) {
         parsed = JSON.parse(configRecord.description);
         if (!parsed.premiumMap) parsed.premiumMap = {};
       }
-      parsed.premiumMap[mediaId] = itemPrice;
+      parsed.premiumMap[url] = itemPrice;
 
       await db.category.upsert({
         where: { slug: 'creator-profile-config' },
@@ -303,15 +304,16 @@ export async function DELETE(req: Request) {
       }
     } catch (e) {}
 
-    // Delete premium config mapping if present
+    // Delete premium config mapping if present using both ID and URL
     try {
       const configRecord = await db.category.findUnique({
         where: { slug: 'creator-profile-config' },
       });
       if (configRecord && configRecord.description) {
         const parsed = JSON.parse(configRecord.description);
-        if (parsed.premiumMap && parsed.premiumMap[id]) {
-          delete parsed.premiumMap[id];
+        if (parsed.premiumMap) {
+          if (parsed.premiumMap[id]) delete parsed.premiumMap[id];
+          if (mediaUrl && parsed.premiumMap[mediaUrl]) delete parsed.premiumMap[mediaUrl];
           await db.category.update({
             where: { slug: 'creator-profile-config' },
             data: { description: JSON.stringify(parsed) },

@@ -154,7 +154,7 @@ export default function MediaCard({ media, onSelect, priority = false }: MediaCa
 
         {/* Media Container */}
         <div className="relative w-full overflow-hidden bg-dark-card" style={{ aspectRatio: media.width && media.height ? `${media.width}/${media.height}` : '4/5' }}>
-          <div className={`w-full h-full transition-all duration-700 ${isLocked ? 'blur-[22px] scale-105 pointer-events-none brightness-[0.45]' : ''}`}>
+          <div className={`w-full h-full transition-all duration-700 ${isLocked ? 'blur-[10px] scale-105 pointer-events-none brightness-[0.55] contrast-[1.05]' : ''}`}>
             {media.type === 'VIDEO' && isHovered ? (
               <video
                 src={media.url}

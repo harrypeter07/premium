@@ -394,24 +394,11 @@ export default function AdminUploadPage() {
               </div>
 
               <div className="flex flex-wrap items-center gap-4 pt-1 border-t border-white/5">
-                <div className="space-y-1">
-                  <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-medium">Visibility</label>
-                  <select
-                    value={visibility}
-                    onChange={e => setVisibility(e.target.value as Visibility)}
-                    className="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                  >
-                    <option value="PUBLIC">PUBLIC</option>
-                    <option value="PRIVATE">PRIVATE (VIP Only)</option>
-                    <option value="DRAFT">DRAFT</option>
-                  </select>
-                </div>
-
-                <label className="flex items-center gap-1.5 cursor-pointer text-xs text-zinc-300 mt-4">
+                <label className="flex items-center gap-1.5 cursor-pointer text-xs text-zinc-300 mt-2">
                   <input type="checkbox" checked={isFeatured} onChange={e => setIsFeatured(e.target.checked)} className="accent-violet-500 w-3.5 h-3.5" />
                   Feature on homepage
                 </label>
-                <label className="flex items-center gap-1.5 cursor-pointer text-xs text-zinc-300 mt-4">
+                <label className="flex items-center gap-1.5 cursor-pointer text-xs text-zinc-300 mt-2">
                   <input type="checkbox" checked={isPinned} onChange={e => setIsPinned(e.target.checked)} className="accent-violet-500 w-3.5 h-3.5" />
                   Pin first item to top hero
                 </label>
