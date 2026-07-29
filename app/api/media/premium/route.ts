@@ -35,7 +35,7 @@ export async function POST(req: Request) {
 
     // 2. Modify map
     if (isPremium) {
-      premiumMap[url] = price || '$9.99';
+      premiumMap[url] = price || '₹99';
     } else {
       if (premiumMap[url]) {
         delete premiumMap[url];
@@ -85,7 +85,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: 'Config upload failed: ' + e.message }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, isPremium, price: price || '$9.99' });
+    return NextResponse.json({ success: true, isPremium, price: price || '₹99' });
   } catch (err: any) {
     console.error('Failed to toggle premium status:', err);
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });

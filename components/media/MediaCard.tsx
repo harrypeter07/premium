@@ -83,9 +83,9 @@ export default function MediaCard({ media, onSelect, priority = false }: MediaCa
     let targetPrice = localPrice;
 
     if (targetPremium) {
-      const inputPrice = prompt("Enter unlock price for this premium post:", "$9.99");
+      const inputPrice = prompt("Enter unlock price for this premium post:", "₹99");
       if (inputPrice === null) return; // Cancelled
-      targetPrice = inputPrice.trim() || '$9.99';
+      targetPrice = inputPrice.trim() || '₹99';
     } else {
       targetPrice = 'FREE';
     }

@@ -461,7 +461,7 @@ export default function AdminDashboardPage() {
                   Free Pack
                 </label>
                 {!colIsFree && (
-                  <Input value={colPrice} onChange={e => setColPrice(e.target.value)} placeholder="Price e.g. $9.99" className="h-8 text-xs w-32 border-white/10" />
+                  <Input value={colPrice} onChange={e => setColPrice(e.target.value)} placeholder="Price e.g. ₹99" className="h-8 text-xs w-32 border-white/10" />
                 )}
               </div>
 

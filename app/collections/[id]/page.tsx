@@ -168,7 +168,7 @@ export default function CollectionDetailPage() {
             <div className="space-y-3 p-4 rounded-2xl bg-black/80 backdrop-blur-md border border-violet-500/50">
               <Input value={editName} onChange={e => setEditName(e.target.value)} placeholder="Collection Name" className="text-sm font-bold bg-white/5" />
               <Input value={editDesc} onChange={e => setEditDesc(e.target.value)} placeholder="Collection Description" className="text-xs bg-white/5" />
-              <Input value={editPrice} onChange={e => setEditPrice(e.target.value)} placeholder="Price e.g. FREE or $9.99" className="text-xs w-36 bg-white/5" />
+              <Input value={editPrice} onChange={e => setEditPrice(e.target.value)} placeholder="Price e.g. FREE or ₹99" className="text-xs w-36 bg-white/5" />
               <div className="flex gap-2">
                 <Button size="sm" onClick={handleSaveEdit} className="bg-emerald-600 hover:bg-emerald-500 text-white gap-1 text-xs">
                   <Check className="w-3.5 h-3.5" /> Save Changes

@@ -34,7 +34,7 @@ export default function AdminUploadPage() {
 
   // Premium state
   const [isPremium, setIsPremium] = useState(false);
-  const [price, setPrice] = useState('$9.99');
+  const [price, setPrice] = useState('₹99');
 
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -213,7 +213,7 @@ export default function AdminUploadPage() {
     setIsFeatured(false);
     setIsPinned(false);
     setIsPremium(false);
-    setPrice('$9.99');
+    setPrice('₹99');
     setSuccess(false);
     setPublishedCount(0);
     setErrorMsg('');
@@ -374,7 +374,7 @@ export default function AdminUploadPage() {
                     <Input
                       value={price}
                       onChange={e => setPrice(e.target.value)}
-                      placeholder="e.g. $9.99 or VIP Access"
+                      placeholder="e.g. ₹99 or VIP Access"
                       className="h-9 text-xs w-48 bg-white/5 border-white/10"
                     />
                     <p className="text-[10px] text-zinc-500">Paid images will be beautifully blurred to normal visitors with a button to unlock.</p>

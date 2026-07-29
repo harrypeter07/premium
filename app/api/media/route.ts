@@ -185,7 +185,7 @@ export async function POST(req: Request) {
     const finalDescription = cleanOrGenerateDescription(description);
 
     const mediaId = `media-${Date.now()}`;
-    const itemPrice = isPremium ? (price || '$9.99') : 'FREE';
+    const itemPrice = isPremium ? (price || '₹99') : 'FREE';
 
     const newMediaItem: MediaItem = {
       id: mediaId,
