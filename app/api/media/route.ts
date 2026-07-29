@@ -26,10 +26,13 @@ async function fetchFromImageKit(): Promise<MediaItem[]> {
     const files = await res.json();
     if (!Array.isArray(files)) return [];
 
-    // Filter out stock placeholder images (e.g. default-image.jpg) so ONLY real user uploads show
+    // Filter out:
+    // 1. Stock placeholder images (e.g. default-image.jpg)
+    // 2. Creator profile cover / avatar images so they don't leak into the main feed
     const userFiles = files.filter((file: any) =>
       file.name !== 'default-image.jpg' &&
-      !file.name.includes('default')
+      !file.name.includes('default') &&
+      (!file.tags || (!file.tags.includes('creator_cover') && !file.tags.includes('creator_avatar')))
     );
 
     return userFiles.map((file: any) => {
@@ -240,8 +243,22 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: 'Media ID is required' }, { status: 400 });
     }
 
+    // Filter out local cache
     inMemoryMedia = inMemoryMedia.filter((m) => m.id !== id && m.url !== id);
 
+    let mediaUrl = '';
+    
+    // Retrieve database record first
+    try {
+      const dbRecord = await db.media.findUnique({
+        where: { id },
+      });
+      if (dbRecord) {
+        mediaUrl = dbRecord.url;
+      }
+    } catch (e) {}
+
+    // 1. Delete from Supabase PostgreSQL Database via Prisma
     try {
       await db.media.deleteMany({
         where: {
@@ -250,6 +267,39 @@ export async function DELETE(req: Request) {
       });
     } catch (prismaErr) {
       console.warn('Prisma DB delete fallback:', prismaErr);
+    }
+
+    // 2. Delete from ImageKit CDN
+    const privateKey = process.env.IMAGEKIT_PRIVATE_KEY || 'private_QEH6sevZJ316f5zVNCz8HGcWY8k=';
+    const authHeader = 'Basic ' + Buffer.from(privateKey + ':').toString('base64');
+
+    try {
+      const listRes = await fetch('https://api.imagekit.io/v1/files?limit=100', {
+        headers: { 'Authorization': authHeader },
+        cache: 'no-store',
+      });
+      if (listRes.ok) {
+        const files = await listRes.json();
+        if (Array.isArray(files)) {
+          const fileToDelete = files.find(f => 
+            f.fileId === id || 
+            (mediaUrl && f.url === mediaUrl) ||
+            f.url.includes(id) ||
+            (id.startsWith('ik-') && f.name === id.substring(3))
+          );
+          if (fileToDelete && fileToDelete.fileId) {
+            const delRes = await fetch(`https://api.imagekit.io/v1/files/${fileToDelete.fileId}`, {
+              method: 'DELETE',
+              headers: { 'Authorization': authHeader },
+            });
+            if (delRes.ok) {
+              console.log('Successfully deleted file from ImageKit:', fileToDelete.fileId);
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('ImageKit delete fail:', e);
     }
 
     return NextResponse.json({ success: true, message: 'Media item deleted' });
