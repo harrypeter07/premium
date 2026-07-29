@@ -1,15 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
-let memoryProfileText = {
-  name: 'Smriti Shah',
-  role: 'Haute Couture Model & Visual Storyteller',
-  location: 'Mumbai · Paris · London',
-  bio: 'Smriti Shah (@smriti.shans) is an international visual artist, fashion model, and storyteller. She curates high-resolution fine art imagery, editorial films, and exclusive behind-the-scenes archives.',
-  coverUrl: '',
-  avatarUrl: '',
-};
-
 export async function GET() {
   try {
     const privateKey = process.env.IMAGEKIT_PRIVATE_KEY || 'private_QEH6sevZJ316f5zVNCz8HGcWY8k=';
@@ -50,23 +41,35 @@ export async function GET() {
       console.warn('Avatar fetch note:', e);
     }
 
-    // 3. Try to read text profile from database SystemConfig
+    // 3. Fetch text profile from database
+    let profileData = {
+      name: 'Smriti Shah',
+      role: 'Haute Couture Model & Visual Storyteller',
+      location: 'Mumbai · Paris · London',
+      bio: 'Smriti Shah (@smriti.shans) is an international visual artist, fashion model, and storyteller. She curates high-resolution fine art imagery, editorial films, and exclusive behind-the-scenes archives.',
+    };
+
     try {
-      const configRecord = await db.systemConfig.findUnique({
-        where: { key: 'smr_creator_profile' },
+      const configRecord = await db.category.findUnique({
+        where: { slug: 'creator-profile-config' },
       });
-      if (configRecord) {
-        const parsed = JSON.parse(configRecord.value);
-        memoryProfileText = { ...memoryProfileText, ...parsed };
+      if (configRecord && configRecord.description) {
+        const parsed = JSON.parse(configRecord.description);
+        profileData = {
+          name: configRecord.name || 'Smriti Shah',
+          role: parsed.role || '',
+          location: parsed.location || '',
+          bio: parsed.bio || '',
+        };
       }
     } catch (dbErr) {
-      console.warn('DB fetch fallback for profile text:', dbErr);
+      console.warn('DB fetch error for profile text:', dbErr);
     }
 
     return NextResponse.json({
       success: true,
       profile: {
-        ...memoryProfileText,
+        ...profileData,
         coverUrl,
         avatarUrl,
       },
@@ -74,8 +77,8 @@ export async function GET() {
   } catch (err) {
     console.error('Creator profile GET error:', err);
     return NextResponse.json({
-      success: true,
-      profile: memoryProfileText,
+      success: false,
+      error: 'Failed to fetch creator profile',
     });
   }
 }
@@ -83,26 +86,40 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    memoryProfileText = {
-      ...memoryProfileText,
-      ...body,
-    };
+    const { name, role, location, bio } = body;
 
-    // Save text profile to database SystemConfig for permanent persistence
+    const payload = JSON.stringify({
+      role: role || '',
+      location: location || '',
+      bio: bio || '',
+    });
+
     try {
-      await db.systemConfig.upsert({
-        where: { key: 'smr_creator_profile' },
-        update: { value: JSON.stringify(body) },
+      await db.category.upsert({
+        where: { slug: 'creator-profile-config' },
+        update: {
+          name: name || 'Smriti Shah',
+          description: payload,
+        },
         create: {
-          key: 'smr_creator_profile',
-          value: JSON.stringify(body),
+          name: name || 'Smriti Shah',
+          slug: 'creator-profile-config',
+          description: payload,
         },
       });
     } catch (dbErr) {
-      console.warn('DB save fallback for profile text:', dbErr);
+      console.warn('DB save error for profile text:', dbErr);
     }
 
-    return NextResponse.json({ success: true, profile: memoryProfileText });
+    return NextResponse.json({
+      success: true,
+      profile: {
+        name: name || 'Smriti Shah',
+        role: role || '',
+        location: location || '',
+        bio: bio || '',
+      },
+    });
   } catch (err) {
     return NextResponse.json({ success: false, error: 'Failed to update profile' }, { status: 400 });
   }
