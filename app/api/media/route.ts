@@ -122,15 +122,26 @@ export async function GET(req: Request) {
     // Fetch directly from ImageKit API
     const imageKitItems = await fetchFromImageKit();
 
-    // Fetch premium map config from database SystemConfig
+    // Fetch premium map config from ImageKit CDN config file
     let premiumMap: Record<string, string> = {};
     try {
-      const configRecord = await db.systemConfig.findUnique({
-        where: { key: 'premium_map_config' },
+      const privateKey = process.env.IMAGEKIT_PRIVATE_KEY || 'private_QEH6sevZJ316f5zVNCz8HGcWY8k=';
+      const authHeader = 'Basic ' + Buffer.from(privateKey + ':').toString('base64');
+
+      const configRes = await fetch('https://api.imagekit.io/v1/files?tags=premium_map_config', {
+        headers: { 'Authorization': authHeader },
+        cache: 'no-store',
       });
-      if (configRecord && configRecord.value) {
-        const parsed = JSON.parse(configRecord.value);
-        premiumMap = parsed.premiumMap || {};
+      if (configRes.ok) {
+        const configFiles = await configRes.json();
+        if (Array.isArray(configFiles) && configFiles.length > 0) {
+          const fileUrl = configFiles[0].url;
+          const contentRes = await fetch(fileUrl, { cache: 'no-store' });
+          if (contentRes.ok) {
+            const parsed = await contentRes.json();
+            premiumMap = parsed.premiumMap || {};
+          }
+        }
       }
     } catch (e) {}
 
@@ -209,25 +220,62 @@ export async function POST(req: Request) {
 
     inMemoryMedia.unshift(newMediaItem);
 
-    // Save premium config mapping to db SystemConfig record using URL for reliable matching
+    // Save premium config mapping to ImageKit CDN config file using URL for reliable matching
     try {
-      const configRecord = await db.systemConfig.findUnique({
-        where: { key: 'premium_map_config' },
-      });
-      let parsed = { premiumMap: {} as Record<string, string> };
-      if (configRecord && configRecord.value) {
-        parsed = JSON.parse(configRecord.value);
-        if (!parsed.premiumMap) parsed.premiumMap = {};
-      }
-      parsed.premiumMap[url] = itemPrice;
+      const privateKey = process.env.IMAGEKIT_PRIVATE_KEY || 'private_QEH6sevZJ316f5zVNCz8HGcWY8k=';
+      const authHeader = 'Basic ' + Buffer.from(privateKey + ':').toString('base64');
 
-      await db.systemConfig.upsert({
-        where: { key: 'premium_map_config' },
-        update: { value: JSON.stringify(parsed) },
-        create: {
-          key: 'premium_map_config',
-          value: JSON.stringify(parsed),
-        },
+      let premiumMap: Record<string, string> = {};
+      try {
+        const configRes = await fetch('https://api.imagekit.io/v1/files?tags=premium_map_config', {
+          headers: { 'Authorization': authHeader },
+          cache: 'no-store',
+        });
+        if (configRes.ok) {
+          const configFiles = await configRes.json();
+          if (Array.isArray(configFiles) && configFiles.length > 0) {
+            const fileUrl = configFiles[0].url;
+            const contentRes = await fetch(fileUrl, { cache: 'no-store' });
+            if (contentRes.ok) {
+              const parsed = await contentRes.json();
+              premiumMap = parsed.premiumMap || {};
+            }
+          }
+        }
+      } catch (e) {}
+
+      premiumMap[url] = itemPrice;
+
+      // Purge old files
+      try {
+        const listRes = await fetch('https://api.imagekit.io/v1/files?tags=premium_map_config', {
+          headers: { 'Authorization': authHeader },
+          cache: 'no-store',
+        });
+        if (listRes.ok) {
+          const files = await listRes.json();
+          if (Array.isArray(files)) {
+            for (const f of files) {
+              await fetch(`https://api.imagekit.io/v1/files/${f.fileId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': authHeader },
+              });
+            }
+          }
+        }
+      } catch (e) {}
+
+      // Upload updated
+      const formData = new FormData();
+      const fileBlob = new Blob([JSON.stringify({ premiumMap })], { type: 'application/json' });
+      formData.append('file', fileBlob, 'premium_map_config.json');
+      formData.append('fileName', 'premium_map_config.json');
+      formData.append('tags', 'premium_map_config');
+
+      await fetch('https://upload.imagekit.io/api/v1/files/upload', {
+        method: 'POST',
+        headers: { 'Authorization': authHeader },
+        body: formData,
       });
     } catch (e) {
       console.warn('Failed to save premium map config:', e);
@@ -303,21 +351,72 @@ export async function DELETE(req: Request) {
       }
     } catch (e) {}
 
-    // Delete premium config mapping if present using both ID and URL
+    // Delete premium config mapping if present using both ID and URL in ImageKit config file
     try {
-      const configRecord = await db.systemConfig.findUnique({
-        where: { key: 'premium_map_config' },
-      });
-      if (configRecord && configRecord.value) {
-        const parsed = JSON.parse(configRecord.value);
-        if (parsed.premiumMap) {
-          if (parsed.premiumMap[id]) delete parsed.premiumMap[id];
-          if (mediaUrl && parsed.premiumMap[mediaUrl]) delete parsed.premiumMap[mediaUrl];
-          await db.systemConfig.update({
-            where: { key: 'premium_map_config' },
-            data: { value: JSON.stringify(parsed) },
-          });
+      const privateKey = process.env.IMAGEKIT_PRIVATE_KEY || 'private_QEH6sevZJ316f5zVNCz8HGcWY8k=';
+      const authHeader = 'Basic ' + Buffer.from(privateKey + ':').toString('base64');
+
+      let premiumMap: Record<string, string> = {};
+      try {
+        const configRes = await fetch('https://api.imagekit.io/v1/files?tags=premium_map_config', {
+          headers: { 'Authorization': authHeader },
+          cache: 'no-store',
+        });
+        if (configRes.ok) {
+          const configFiles = await configRes.json();
+          if (Array.isArray(configFiles) && configFiles.length > 0) {
+            const fileUrl = configFiles[0].url;
+            const contentRes = await fetch(fileUrl, { cache: 'no-store' });
+            if (contentRes.ok) {
+              const parsed = await contentRes.json();
+              premiumMap = parsed.premiumMap || {};
+            }
+          }
         }
+      } catch (e) {}
+
+      let changed = false;
+      if (premiumMap[id]) {
+        delete premiumMap[id];
+        changed = true;
+      }
+      if (mediaUrl && premiumMap[mediaUrl]) {
+        delete premiumMap[mediaUrl];
+        changed = true;
+      }
+
+      if (changed) {
+        // Purge old files
+        try {
+          const listRes = await fetch('https://api.imagekit.io/v1/files?tags=premium_map_config', {
+            headers: { 'Authorization': authHeader },
+            cache: 'no-store',
+          });
+          if (listRes.ok) {
+            const files = await listRes.json();
+            if (Array.isArray(files)) {
+              for (const f of files) {
+                await fetch(`https://api.imagekit.io/v1/files/${f.fileId}`, {
+                  method: 'DELETE',
+                  headers: { 'Authorization': authHeader },
+                });
+              }
+            }
+          }
+        } catch (e) {}
+
+        // Upload updated
+        const formData = new FormData();
+        const fileBlob = new Blob([JSON.stringify({ premiumMap })], { type: 'application/json' });
+        formData.append('file', fileBlob, 'premium_map_config.json');
+        formData.append('fileName', 'premium_map_config.json');
+        formData.append('tags', 'premium_map_config');
+
+        await fetch('https://upload.imagekit.io/api/v1/files/upload', {
+          method: 'POST',
+          headers: { 'Authorization': authHeader },
+          body: formData,
+        });
       }
     } catch (e) {}
 
