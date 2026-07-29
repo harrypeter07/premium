@@ -47,7 +47,7 @@ async function fetchFromImageKit(): Promise<MediaItem[]> {
         description,
         type: isVideo ? 'VIDEO' : 'IMAGE',
         url: file.url,
-        thumbnailUrl: file.thumbnail || file.url,
+        thumbnailUrl: file.url,
         altText: title,
         width: file.width || 1200,
         height: file.height || 1600,

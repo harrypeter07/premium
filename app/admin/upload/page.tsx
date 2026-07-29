@@ -144,7 +144,7 @@ export default function AdminUploadPage() {
         }
 
         const imageKitUrl = uploadData.url;
-        const thumbnailUrl = uploadData.thumbnailUrl || uploadData.url;
+        const thumbnailUrl = uploadData.url;
         const isVideo = file.type.startsWith('video/');
 
         const itemTitle = selectedFiles.length === 1 && title.trim()
