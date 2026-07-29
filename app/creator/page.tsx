@@ -174,6 +174,15 @@ export default function CreatorPage() {
             <p className="text-xs text-gray-400 flex items-center justify-center sm:justify-start gap-1 font-mono">
               <MapPin className="w-3.5 h-3.5" /> {profile.location}
             </p>
+            <div className="pt-4 flex justify-center sm:justify-start">
+              <Link href="/">
+                <Button className="relative bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-black text-xs uppercase tracking-widest px-6 h-10 border-0 rounded-2xl shadow-[0_0_25px_rgba(168,85,247,0.7)] overflow-hidden group">
+                  <span className="absolute inset-0 border border-violet-400 rounded-2xl animate-ping opacity-75 pointer-events-none" />
+                  <Sparkles className="w-3.5 h-3.5 mr-1.5 text-amber-300 animate-pulse" />
+                  Explore Gallery Feed
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
 

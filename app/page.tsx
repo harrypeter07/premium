@@ -187,11 +187,6 @@ export default function HomePage() {
 
           {/* Main Recommendation Feed Section */}
           <div className="space-y-4 pt-2">
-            <div className="flex items-center justify-between">
-              <h2 className="font-display font-bold text-xl text-white">Recommended For You</h2>
-              <span className="text-xs text-gray-400 font-mono text-[11px]">AI Feed Scoring</span>
-            </div>
-
             <MasonryFeed items={recommendedItems} />
           </div>
         </>
