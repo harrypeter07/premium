@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Sparkles, Flame, Crown, ArrowRight, ShieldCheck, Film, Image as ImageIcon } from 'lucide-react';
+import { Sparkles, Flame, Crown, ArrowRight, ShieldCheck, Film, CheckCircle } from 'lucide-react';
 import { CREATOR_PROFILE } from '@/lib/data/mockData';
 import { getRecommendedFeed } from '@/lib/recommendations';
 import MasonryFeed from '@/components/feed/MasonryFeed';
@@ -52,35 +52,35 @@ export default function HomePage() {
         <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-brand-accent/20 blur-[120px] pointer-events-none" />
 
         <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6">
-          {/* Creator Details */}
-          <div className="space-y-3 max-w-2xl text-center lg:text-left">
-            <Badge variant="default" className="gap-2">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Official Visual Portfolio</span>
+          {/* Creator Details featuring Smriti Shah (@smriti.shans) */}
+          <div className="space-y-3.5 max-w-2xl text-center lg:text-left">
+            <Badge variant="default" className="gap-2 border-violet-500/40 text-violet-300 bg-violet-600/20 shadow-[0_0_15px_rgba(124,58,237,0.3)]">
+              <Sparkles className="w-3.5 h-3.5 text-violet-400" />
+              <span>Smriti Shah · Official Visual Portfolio</span>
             </Badge>
 
             <h1 className="font-display font-black text-2xl sm:text-4xl lg:text-5xl text-white tracking-tight leading-tight">
-              Aesthetics, Haute Couture &amp; <span className="gradient-text">Cinematic Stories.</span>
+              Smriti Shah — Aesthetics, Haute Couture &amp; <span className="gradient-text">Cinematic Stories.</span>
             </h1>
 
             <p className="text-gray-300 text-xs sm:text-sm leading-relaxed">
-              {CREATOR_PROFILE.bio}
+              Exclusive high-fashion editorials, architectural photography, cinematic travel films, and curated occasion packs by <strong className="text-violet-300">Smriti Shah (@smriti.shans)</strong>.
             </p>
 
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 pt-1">
               <Button
                 onClick={() => setIsMembershipOpen(true)}
                 variant="default"
-                className="bg-gradient-to-r from-brand-purple to-brand-accent hover:opacity-90 transition-opacity gap-2"
+                className="bg-gradient-to-r from-brand-purple to-brand-accent hover:opacity-90 transition-opacity gap-2 shadow-[0_0_20px_rgba(124,58,237,0.4)]"
               >
                 <Crown className="w-3.5 h-3.5" />
                 <span>Join VIP Pass</span>
               </Button>
 
               <Link href="/creator">
-                <Button variant="outline" className="gap-1.5">
+                <Button variant="outline" className="gap-1.5 border-white/20 hover:bg-white/10">
                   <span>About Smriti Shah</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-brand-purple" />
+                  <ArrowRight className="w-3.5 h-3.5 text-violet-400" />
                 </Button>
               </Link>
             </div>
@@ -130,7 +130,6 @@ export default function HomePage() {
           ))}
         </div>
       ) : mediaList.length === 0 ? (
-        /* Empty State Card - Shadcn Style */
         <Card className="max-w-md mx-auto p-8 border-dashed border-white/20 text-center space-y-4 bg-[#140f21]/80">
           <div className="w-12 h-12 rounded-full bg-brand-purple/10 border border-brand-purple/20 flex items-center justify-center text-brand-purple mx-auto">
             <Film className="w-6 h-6" />

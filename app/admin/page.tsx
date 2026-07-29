@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
   ShieldCheck, Users, Activity, Upload, ArrowUpRight, Server,
   Lock, Key, LogOut, Film, CheckCircle, AlertCircle, ImageIcon, Video,
-  Folder, Plus, Trash2, Tag, Loader2, Sparkles
+  Folder, Plus, Trash2, Tag, Loader2, Sparkles, BarChart3
 } from 'lucide-react';
 import { MediaItem, CollectionItem } from '@/lib/types';
 import { MEDIA_ITEMS } from '@/lib/data/mockData';
@@ -264,7 +264,14 @@ export default function AdminDashboardPage() {
           <h1 className="text-2xl font-black text-white tracking-tight">Dashboard &amp; Content Management</h1>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Prominent Live Analytics Navigation Button */}
+          <Link href="/admin/analytics">
+            <Button variant="outline" className="gap-1.5 border-violet-500/40 text-violet-300 hover:bg-violet-600/20 h-9 font-bold shadow-[0_0_15px_rgba(124,58,237,0.25)]">
+              <BarChart3 className="w-4 h-4 text-violet-400" />
+              Live Analytics &amp; Telemetry
+            </Button>
+          </Link>
           <Link href="/admin/upload">
             <Button className="gap-1.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-90 text-white h-9 font-bold shadow-[0_0_20px_rgba(124,58,237,0.4)]">
               <Upload className="w-4 h-4" />
