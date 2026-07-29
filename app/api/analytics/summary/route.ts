@@ -12,7 +12,7 @@ export async function GET() {
     try {
       events = await db.analyticsEvent.findMany({
         orderBy: { createdAt: 'desc' },
-        take: 300,
+        take: 500,
       });
     } catch (prismaErr) {
       console.warn('[Analytics Summary] Prisma fetch fallback:', prismaErr);
@@ -92,6 +92,32 @@ export async function GET() {
       count,
     })).sort((a, b) => b.count - a.count).slice(0, 10);
 
+    // 7. Premium Clicks interested counts
+    const premiumClicksMap: Record<string, number> = {};
+    events.forEach(e => {
+      if (e.type === 'PREMIUM_UNLOCK_CLICK' && e.mediaId) {
+        premiumClicksMap[e.mediaId] = (premiumClicksMap[e.mediaId] || 0) + 1;
+      }
+    });
+
+    let premiumMediaList: any[] = [];
+    try {
+      premiumMediaList = await db.media.findMany({
+        where: { id: { in: Object.keys(premiumClicksMap) } },
+        select: { id: true, title: true, thumbnailUrl: true },
+      });
+    } catch (e) {}
+
+    const premiumClicks = Object.entries(premiumClicksMap).map(([mediaId, count]) => {
+      const match = premiumMediaList.find(m => m.id === mediaId);
+      return {
+        mediaId,
+        title: match ? match.title : `Premium Image (${mediaId})`,
+        thumbnailUrl: match ? match.thumbnailUrl : '',
+        count,
+      };
+    }).sort((a, b) => b.count - a.count);
+
     return NextResponse.json({
       success: true,
       metrics: {
@@ -104,6 +130,7 @@ export async function GET() {
         browserBreakdown,
         regionalFootprint,
         navigationTrails,
+        premiumClicks,
       },
     });
   } catch (err) {

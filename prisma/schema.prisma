@@ -91,6 +91,9 @@ model Media {
   visibility     Visibility  @default(PUBLIC)
   publishedAt    DateTime?
   
+  isPremium      Boolean     @default(false)
+  price          String      @default("FREE")
+  
   categoryId     String
   category       Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   mediaTags      MediaTag[]
@@ -146,7 +149,7 @@ model History {
 
 model AnalyticsEvent {
   id          String   @id @default(cuid())
-  type        String   // PAGE_VIEW, NAVIGATION, HEARTBEAT, MEDIA_VIEW
+  type        String   // PAGE_VIEW, NAVIGATION, HEARTBEAT, MEDIA_VIEW, PREMIUM_UNLOCK_CLICK
   path        String
   fromPath    String?
   referrer    String?

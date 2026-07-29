@@ -66,6 +66,9 @@ export interface MediaItem {
   collectionId?: string;
   tags: string[];
   
+  isPremium?: boolean;
+  price?: string;
+  
   affiliateProducts?: AffiliateProduct[];
 }
 

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Upload, Sparkles, CheckCircle, ArrowLeft, AlertCircle, Loader2, Image as ImageIcon, Video, Folder, Layers } from 'lucide-react';
+import { Upload, Sparkles, CheckCircle, ArrowLeft, AlertCircle, Loader2, Image as ImageIcon, Video, Folder, Layers, Crown } from 'lucide-react';
 import { CATEGORIES_LIST } from '@/lib/data/mockData';
 import { CollectionItem } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -31,6 +31,10 @@ export default function AdminUploadPage() {
   const [visibility, setVisibility] = useState<Visibility>('PUBLIC');
   const [isFeatured, setIsFeatured] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
+
+  // Premium state
+  const [isPremium, setIsPremium] = useState(false);
+  const [price, setPrice] = useState('$9.99');
 
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -163,6 +167,8 @@ export default function AdminUploadPage() {
             isFeatured,
             isPinned: isPinned && i === 0,
             tags: ['SmritiShah', categorySlug, isVideo ? 'CinematicVideo' : 'Photography'],
+            isPremium,
+            price: isPremium ? price : 'FREE',
           }),
         });
 
@@ -206,6 +212,8 @@ export default function AdminUploadPage() {
     setVisibility('PUBLIC');
     setIsFeatured(false);
     setIsPinned(false);
+    setIsPremium(false);
+    setPrice('$9.99');
     setSuccess(false);
     setPublishedCount(0);
     setErrorMsg('');
@@ -238,62 +246,33 @@ export default function AdminUploadPage() {
             <div className="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center mx-auto">
               <CheckCircle className="w-6 h-6 text-emerald-400" />
             </div>
-            <div>
-              <h2 className="font-bold text-lg text-white">{publishedCount} Archive(s) Published Successfully!</h2>
-              <p className="text-xs text-zinc-400 mt-1">All selected media items are hosted on ImageKit CDN and live on your portfolio.</p>
+            <h2 className="text-xl font-bold text-white">Upload Task Completed</h2>
+            <p className="text-sm text-zinc-300 max-w-sm mx-auto">Successfully uploaded and published <strong className="text-emerald-400">{publishedCount}</strong> media files directly into Smriti&apos;s live visuals portfolio feed.</p>
+            <div className="flex justify-center gap-3 pt-4">
+              <Button onClick={resetForm} className="bg-violet-600 hover:bg-violet-500 text-white font-bold">Upload More Files</Button>
+              <Link href="/admin"><Button variant="outline">Back to Studio</Button></Link>
             </div>
           </div>
-          <CardFooter className="p-3 gap-2 justify-center border-t border-emerald-500/20 bg-transparent">
-            <Button onClick={resetForm} size="sm" className="bg-violet-600 hover:bg-violet-500 text-white">
-              Upload More Files
-            </Button>
-            <Link href="/">
-              <Button variant="outline" size="sm" className="border-zinc-700">
-                View Live Portfolio
-              </Button>
-            </Link>
-          </CardFooter>
         </Card>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="flex items-center justify-between gap-3 p-3 rounded-xl border border-zinc-700/60 bg-zinc-900/50">
-            <div className="text-xs text-zinc-400">
-              {selectedFiles.length > 0 ? (
-                <span className="text-white font-medium flex items-center gap-1.5">
-                  <Layers className="w-4 h-4 text-violet-400" />
-                  {selectedFiles.length} file(s) selected
-                </span>
-              ) : (
-                'No files selected'
-              )}
-            </div>
-            <Button
-              type="submit"
-              disabled={uploading || selectedFiles.length === 0}
-              className="shrink-0 bg-violet-600 hover:bg-violet-500 text-white disabled:opacity-40 gap-2"
-            >
-              {uploading ? (
-                <><Loader2 className="w-4 h-4 animate-spin" />{uploadStep || 'Publishing...'}</>
-              ) : (
-                <><Upload className="w-4 h-4" />Publish {selectedFiles.length > 1 ? `(${selectedFiles.length} items)` : ''}</>
-              )}
-            </Button>
-          </div>
-
+        <form onSubmit={handleSubmit} className="space-y-6">
           {errorMsg && (
-            <div className="flex items-start gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <div className="flex items-center gap-2 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm shadow-[0_0_20px_rgba(239,68,68,0.1)]">
+              <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{errorMsg}</span>
             </div>
           )}
 
+          {/* Upload Drop Zone */}
           <div
             onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
             onDragOver={handleDrag}
+            onDragLeave={handleDrag}
             onDrop={handleDrop}
-            className={`relative flex flex-col items-center justify-center gap-3 p-6 rounded-xl border-2 border-dashed transition-all cursor-pointer text-center ${
-              dragActive ? 'border-violet-500 bg-violet-500/10' : 'border-zinc-700 bg-zinc-900/40 hover:border-zinc-500'
+            className={`relative border-2 border-dashed rounded-3xl p-8 text-center flex flex-col items-center justify-center gap-3 transition-all min-h-[220px] ${
+              dragActive
+                ? 'border-violet-500 bg-violet-600/10 shadow-[0_0_30px_rgba(124,58,237,0.25)]'
+                : 'border-zinc-800 bg-[#140f21] hover:border-zinc-700'
             }`}
           >
             <input
@@ -326,7 +305,7 @@ export default function AdminUploadPage() {
           </div>
 
           <Card className="border border-zinc-800">
-            <CardContent className="p-4 space-y-3">
+            <CardContent className="p-6 space-y-4 bg-[#140f21]">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-medium">
@@ -353,7 +332,7 @@ export default function AdminUploadPage() {
                 </div>
               </div>
 
-              {/* Assign to Collection Dropdown populated with created collections */}
+              {/* Assign to Collection Dropdown */}
               <div className="space-y-1">
                 <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-medium flex items-center gap-1">
                   <Folder className="w-3 h-3 text-violet-400" />
@@ -371,6 +350,38 @@ export default function AdminUploadPage() {
                 </select>
               </div>
 
+              {/* Premium / Paid content toggles */}
+              <div className="p-4 rounded-2xl bg-violet-600/5 border border-violet-500/20 space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-2 cursor-pointer text-sm text-white font-bold">
+                    <input
+                      type="checkbox"
+                      checked={isPremium}
+                      onChange={e => setIsPremium(e.target.checked)}
+                      className="accent-violet-500 w-4 h-4"
+                    />
+                    <Crown className="w-4 h-4 text-amber-400" />
+                    <span>Paid / Premium Locked Content</span>
+                  </label>
+                  <Badge variant="outline" className={isPremium ? 'border-amber-500/40 text-amber-400' : 'text-zinc-500'}>
+                    {isPremium ? 'PREMIUM LOCK ENABLED' : 'FREE ACCESS'}
+                  </Badge>
+                </div>
+
+                {isPremium && (
+                  <div className="space-y-1.5 pt-1">
+                    <label className="text-[11px] text-zinc-400 uppercase tracking-wide font-medium">Unlock Price (Label)</label>
+                    <Input
+                      value={price}
+                      onChange={e => setPrice(e.target.value)}
+                      placeholder="e.g. $9.99 or VIP Access"
+                      className="h-9 text-xs w-48 bg-white/5 border-white/10"
+                    />
+                    <p className="text-[10px] text-zinc-500">Paid images will be beautifully blurred to normal visitors with a button to unlock.</p>
+                  </div>
+                )}
+              </div>
+
               <div className="space-y-1">
                 <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-medium">Description (Optional)</label>
                 <textarea
@@ -382,7 +393,7 @@ export default function AdminUploadPage() {
                 />
               </div>
 
-              <div className="flex flex-wrap items-center gap-4 pt-1">
+              <div className="flex flex-wrap items-center gap-4 pt-1 border-t border-white/5">
                 <div className="space-y-1">
                   <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-medium">Visibility</label>
                   <select
@@ -406,6 +417,26 @@ export default function AdminUploadPage() {
                 </label>
               </div>
             </CardContent>
+            <CardFooter className="p-6 pt-0 flex justify-end gap-2 bg-[#140f21]">
+              <Button type="button" variant="ghost" onClick={resetForm} disabled={uploading}>Reset Form</Button>
+              <Button
+                type="submit"
+                disabled={uploading || selectedFiles.length === 0}
+                className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:opacity-90 text-white font-bold gap-2 shadow-[0_0_20px_rgba(124,58,237,0.4)]"
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>{uploadStep || 'Processing...'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4" />
+                    <span>Start Bulk Ingestion ({selectedFiles.length} files)</span>
+                  </>
+                )}
+              </Button>
+            </CardFooter>
           </Card>
         </form>
       )}

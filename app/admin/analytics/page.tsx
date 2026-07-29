@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Activity, ArrowLeft, BarChart3, Globe, Smartphone, Monitor, Clock,
-  Eye, RefreshCw, Compass, ShieldCheck, MapPin, User, CheckCircle2, Layers
+  Eye, RefreshCw, Compass, ShieldCheck, MapPin, User, CheckCircle2, Crown, Lock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -127,6 +127,41 @@ export default function AdminAnalyticsPage() {
               <p className="text-[11px] text-zinc-400 font-mono">Serverless Edge SLA</p>
             </Card>
           </div>
+
+          {/* Premium locked unlock clicks section */}
+          <Card className="border border-white/10 bg-[#140f21] shadow-[0_0_25px_rgba(255,255,255,0.04)]">
+            <CardHeader className="px-6 pt-6 pb-3">
+              <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
+                <Crown className="w-5 h-5 text-amber-400" />
+                <span>Premium Content - Interested Visitors &amp; Unlock Clicks</span>
+              </CardTitle>
+              <CardDescription className="text-xs text-zinc-400">
+                Maintains total count of visitors clicking the &quot;Buy Premium to Unlock&quot; button per paid item.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-6 pb-6">
+              {(metrics?.premiumClicks || []).length === 0 ? (
+                <p className="text-xs text-zinc-500 font-mono text-center py-6">No premium unlock clicks recorded yet.</p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  {(metrics.premiumClicks).map((c: any) => (
+                    <div key={c.mediaId} className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/5">
+                      {c.thumbnailUrl && (
+                        <img src={c.thumbnailUrl} alt="" className="w-12 h-16 object-cover rounded-lg border border-white/10 shrink-0" />
+                      )}
+                      <div className="min-w-0 space-y-1">
+                        <p className="text-xs font-bold text-white line-clamp-1">{c.title}</p>
+                        <Badge variant="outline" className="border-amber-500/30 text-amber-400 font-mono text-[10px] gap-1">
+                          <Lock className="w-3 h-3" />
+                          <span>{c.count} interested visitors</span>
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Real-time Visitor Navigation Trails Table */}
           <Card className="border border-white/10 bg-[#140f21] shadow-[0_0_25px_rgba(255,255,255,0.04)]">

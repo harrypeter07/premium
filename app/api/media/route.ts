@@ -81,7 +81,7 @@ export async function GET(req: Request) {
 
     let dbItems: MediaItem[] = [];
 
-    // 1. Try Supabase PostgreSQL Database via Prisma Client
+    // Try Supabase PostgreSQL Database via Prisma Client
     try {
       const dbRecords = await db.media.findMany({
         orderBy: { createdAt: 'desc' },
@@ -119,15 +119,32 @@ export async function GET(req: Request) {
       console.warn('Supabase DB fetch fallback triggered:', dbErr);
     }
 
-    // 2. Fetch directly from ImageKit API
+    // Fetch directly from ImageKit API
     const imageKitItems = await fetchFromImageKit();
 
-    // 3. Merge stores seamlessly
+    // Fetch premium map config from database
+    let premiumMap: Record<string, string> = {};
+    try {
+      const configRecord = await db.category.findUnique({
+        where: { slug: 'creator-profile-config' },
+      });
+      if (configRecord && configRecord.description) {
+        const parsed = JSON.parse(configRecord.description);
+        premiumMap = parsed.premiumMap || {};
+      }
+    } catch (e) {}
+
+    // Merge stores seamlessly
     const combinedMap = new Map<string, MediaItem>();
 
     [...inMemoryMedia, ...dbItems, ...imageKitItems].forEach((item) => {
       if (!combinedMap.has(item.id) && !combinedMap.has(item.url)) {
-        combinedMap.set(item.url, item);
+        const price = premiumMap[item.id] || 'FREE';
+        combinedMap.set(item.url, {
+          ...item,
+          isPremium: price !== 'FREE',
+          price,
+        });
       }
     });
 
@@ -146,7 +163,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { title, description, type, url, thumbnailUrl, categorySlug, collectionId, tags, visibility, isFeatured, isPinned } = body;
+    const { title, description, type, url, thumbnailUrl, categorySlug, collectionId, tags, visibility, isFeatured, isPinned, isPremium, price } = body;
 
     if (!url) {
       return NextResponse.json({ error: 'Media URL is required' }, { status: 400 });
@@ -156,6 +173,7 @@ export async function POST(req: Request) {
     const finalDescription = cleanOrGenerateDescription(description);
 
     const mediaId = `media-${Date.now()}`;
+    const itemPrice = isPremium ? (price || '$9.99') : 'FREE';
 
     const newMediaItem: MediaItem = {
       id: mediaId,
@@ -184,9 +202,36 @@ export async function POST(req: Request) {
       },
       collectionId: collectionId || undefined,
       tags: tags || ['SmritiShah', 'Editorial'],
+      isPremium: Boolean(isPremium),
+      price: itemPrice,
     };
 
     inMemoryMedia.unshift(newMediaItem);
+
+    // Save premium config mapping to db Category record
+    try {
+      const configRecord = await db.category.findUnique({
+        where: { slug: 'creator-profile-config' },
+      });
+      let parsed = { premiumMap: {} as Record<string, string> };
+      if (configRecord && configRecord.description) {
+        parsed = JSON.parse(configRecord.description);
+        if (!parsed.premiumMap) parsed.premiumMap = {};
+      }
+      parsed.premiumMap[mediaId] = itemPrice;
+
+      await db.category.upsert({
+        where: { slug: 'creator-profile-config' },
+        update: { description: JSON.stringify(parsed) },
+        create: {
+          name: 'Smriti Shah',
+          slug: 'creator-profile-config',
+          description: JSON.stringify(parsed),
+        },
+      });
+    } catch (e) {
+      console.warn('Failed to save premium map config:', e);
+    }
 
     try {
       const catSlug = categorySlug || 'fashion';
@@ -255,6 +300,23 @@ export async function DELETE(req: Request) {
       });
       if (dbRecord) {
         mediaUrl = dbRecord.url;
+      }
+    } catch (e) {}
+
+    // Delete premium config mapping if present
+    try {
+      const configRecord = await db.category.findUnique({
+        where: { slug: 'creator-profile-config' },
+      });
+      if (configRecord && configRecord.description) {
+        const parsed = JSON.parse(configRecord.description);
+        if (parsed.premiumMap && parsed.premiumMap[id]) {
+          delete parsed.premiumMap[id];
+          await db.category.update({
+            where: { slug: 'creator-profile-config' },
+            data: { description: JSON.stringify(parsed) },
+          });
+        }
       }
     } catch (e) {}
 

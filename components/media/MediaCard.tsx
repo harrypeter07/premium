@@ -3,10 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, Bookmark, Eye, Play, Share2, Trash2 } from 'lucide-react';
+import { Heart, Bookmark, Eye, Play, Share2, Trash2, Lock, Crown } from 'lucide-react';
 import { MediaItem } from '@/lib/types';
 import { getSavedBookmarks, toggleBookmarkStorage, getSavedLikes, toggleLikeStorage, getPersistentUploadedMedia } from '@/lib/storage/localStorage';
 import { getCloudflareImageUrl } from '@/lib/media/cloudflare';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import MembershipModal from '@/components/monetization/MembershipModal';
 
 interface MediaCardProps {
   media: MediaItem;
@@ -23,6 +26,9 @@ export default function MediaCard({ media, onSelect, priority = false }: MediaCa
   const [isAdmin, setIsAdmin] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
   const [showHeartBurst, setShowHeartBurst] = useState(false);
+  
+  // Premium unlock states
+  const [isMembershipOpen, setIsMembershipOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -80,123 +86,195 @@ export default function MediaCard({ media, onSelect, priority = false }: MediaCa
     }
   };
 
+  const handlePremiumClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    // Log PREMIUM_UNLOCK_CLICK in Analytics database
+    try {
+      const visitorId = localStorage.getItem('smr_visitor_id') || 'anon';
+      await fetch('/api/analytics/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'PREMIUM_UNLOCK_CLICK',
+          path: window.location.pathname,
+          visitorId,
+          mediaId: media.id,
+        }),
+      });
+    } catch (err) {
+      console.error('Failed to track interested premium click:', err);
+    }
+
+    setIsMembershipOpen(true);
+  };
+
+  const isLocked = media.isPremium && !isAdmin;
   const formattedUrl = getCloudflareImageUrl(media.thumbnailUrl, 800);
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -6 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onClick={() => onSelect && onSelect(media)}
-      className="masonry-item relative group cursor-pointer rounded-2xl overflow-hidden glass-card border border-white/10 shadow-lg hover:border-violet-500/50 hover:shadow-[0_0_25px_rgba(124,58,237,0.3)] transition-all"
-    >
-      {/* Heart Burst Animated Overlay Feedback */}
-      <AnimatePresence>
-        {showHeartBurst && (
-          <motion.div
-            initial={{ scale: 0.2, opacity: 0, y: 0 }}
-            animate={{ scale: 1.4, opacity: 1, y: -40 }}
-            exit={{ scale: 1.8, opacity: 0, y: -70 }}
-            transition={{ duration: 0.7, ease: 'easeOut' }}
-            className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none"
-          >
-            <div className="p-4 rounded-full bg-red-600/30 backdrop-blur-md border border-red-500/50 shadow-[0_0_40px_rgba(239,68,68,0.8)]">
-              <Heart className="w-16 h-16 text-red-500 fill-red-500 drop-shadow-2xl" />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+    <>
+      <motion.div
+        layout
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        whileHover={isLocked ? {} : { y: -6 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onClick={(e) => {
+          if (isLocked) {
+            handlePremiumClick(e);
+          } else if (onSelect) {
+            onSelect(media);
+          }
+        }}
+        className={`masonry-item relative group rounded-2xl overflow-hidden glass-card border border-white/10 shadow-lg transition-all ${
+          isLocked
+            ? 'border-amber-500/30 hover:border-amber-500/50'
+            : 'hover:border-violet-500/50 hover:shadow-[0_0_25px_rgba(124,58,237,0.3)] cursor-pointer'
+        }`}
+      >
+        {/* Heart Burst Animated Overlay */}
+        <AnimatePresence>
+          {showHeartBurst && (
+            <motion.div
+              initial={{ scale: 0.2, opacity: 0, y: 0 }}
+              animate={{ scale: 1.4, opacity: 1, y: -40 }}
+              exit={{ scale: 1.8, opacity: 0, y: -70 }}
+              transition={{ duration: 0.7, ease: 'easeOut' }}
+              className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none"
+            >
+              <div className="p-4 rounded-full bg-red-600/30 backdrop-blur-md border border-red-500/50 shadow-[0_0_40px_rgba(239,68,68,0.8)]">
+                <Heart className="w-16 h-16 text-red-500 fill-red-500 drop-shadow-2xl" />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-      {/* Media Container */}
-      <div className="relative w-full overflow-hidden bg-dark-card" style={{ aspectRatio: media.width && media.height ? `${media.width}/${media.height}` : '4/5' }}>
-        {media.type === 'VIDEO' && isHovered ? (
-          <video
-            src={media.url}
-            autoPlay
-            muted
-            loop
-            playsInline
-            className="w-full h-full object-cover transition-transform duration-700 scale-105"
-          />
-        ) : (
-          <img
-            src={formattedUrl}
-            alt={media.altText || media.title}
-            loading={priority ? 'eager' : 'lazy'}
-            decoding="async"
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-          />
-        )}
-
-        {/* Gradient Blur Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-dark-base/90 via-dark-base/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-
-        {/* Top Badges & Actions */}
-        <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-10">
-          <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wider uppercase glass-panel text-white border border-white/10 shadow-sm flex items-center gap-1">
-            {media.type === 'VIDEO' && <Play className="w-3 h-3 fill-violet-400 text-violet-400" />}
-            {media.category?.name || 'Fashion'}
-          </span>
-
-          <div className="flex items-center gap-1.5">
-            {/* Admin Delete Button */}
-            {mounted && isAdmin && (
-              <button
-                onClick={handleDelete}
-                className="p-2 rounded-full bg-red-600/80 hover:bg-red-600 text-white border border-red-400/50 shadow-md transition-all"
-                title="Delete Post (Admin)"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
+        {/* Media Container */}
+        <div className="relative w-full overflow-hidden bg-dark-card" style={{ aspectRatio: media.width && media.height ? `${media.width}/${media.height}` : '4/5' }}>
+          <div className={`w-full h-full transition-all duration-700 ${isLocked ? 'blur-[22px] scale-105 pointer-events-none brightness-[0.45]' : ''}`}>
+            {media.type === 'VIDEO' && isHovered ? (
+              <video
+                src={media.url}
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="w-full h-full object-cover transition-transform duration-700 scale-105"
+              />
+            ) : (
+              <img
+                src={formattedUrl}
+                alt={media.altText || media.title}
+                loading={priority ? 'eager' : 'lazy'}
+                decoding="async"
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              />
             )}
-
-            <button
-              onClick={handleBookmark}
-              className={`p-2 rounded-full glass-panel border border-white/10 transition-all ${
-                mounted && isBookmarked ? 'text-violet-400 bg-white/20' : 'text-white/80 hover:text-white hover:bg-white/20'
-              }`}
-              title="Save to bookmarks"
-            >
-              <Bookmark className={`w-3.5 h-3.5 ${mounted && isBookmarked ? 'fill-violet-400' : ''}`} />
-            </button>
           </div>
-        </div>
 
-        {/* Hover Bottom Action & Metadata Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 z-10 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-          <h3 className="font-display font-semibold text-sm text-white line-clamp-2 drop-shadow-md mb-2">
-            {media.title}
-          </h3>
+          {/* Premium Locked Overlay Stage */}
+          {isLocked && (
+            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center p-6 text-center space-y-4">
+              <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/40 flex items-center justify-center shadow-[0_0_20px_rgba(245,158,11,0.2)] animate-pulse">
+                <Crown className="w-7 h-7 text-amber-400" />
+              </div>
+              
+              <div className="space-y-1">
+                <Badge className="bg-amber-500 text-black font-black text-[10px] tracking-widest uppercase">
+                  Premium Locked
+                </Badge>
+                <h4 className="text-white font-bold text-sm line-clamp-1">{media.title}</h4>
+                <p className="text-xs text-amber-300 font-semibold">{media.price || '$9.99'} to Unlock</p>
+              </div>
 
-          <div className="flex items-center justify-between text-xs text-gray-300 pt-1">
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1 text-[11px]">
-                <Eye className="w-3.5 h-3.5 text-gray-400" />
-                {media.views.toLocaleString()}
-              </span>
-              <button
-                onClick={handleLike}
-                className="flex items-center gap-1 text-[11px] hover:text-red-400 transition-colors group/like"
+              <Button
+                onClick={handlePremiumClick}
+                size="sm"
+                className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-black text-xs px-4 h-9 shadow-[0_0_20px_rgba(245,158,11,0.4)] transition-all rounded-xl"
               >
-                <Heart className={`w-3.5 h-3.5 transition-transform group-hover/like:scale-125 ${mounted && isLiked ? 'text-red-400 fill-red-400' : 'text-gray-400'}`} />
-                {likesCount.toLocaleString()}
-              </button>
+                Buy Premium to Unlock
+              </Button>
             </div>
+          )}
 
-            <button
-              onClick={handleShare}
-              className="p-1.5 rounded-full hover:bg-white/10 text-gray-300 hover:text-white transition-colors"
-              title="Share"
-            >
-              <Share2 className="w-3.5 h-3.5" />
-            </button>
+          {/* Gradient Blur Overlay */}
+          {!isLocked && (
+            <div className="absolute inset-0 bg-gradient-to-t from-dark-base/90 via-dark-base/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+          )}
+
+          {/* Top Badges & Actions */}
+          <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-10">
+            <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wider uppercase glass-panel text-white border border-white/10 shadow-sm flex items-center gap-1">
+              {media.type === 'VIDEO' && <Play className="w-3 h-3 fill-violet-400 text-violet-400" />}
+              {media.category?.name || 'Fashion'}
+            </span>
+
+            <div className="flex items-center gap-1.5">
+              {/* Admin Delete Button */}
+              {mounted && isAdmin && (
+                <button
+                  onClick={handleDelete}
+                  className="p-2 rounded-full bg-red-600/80 hover:bg-red-600 text-white border border-red-400/50 shadow-md transition-all"
+                  title="Delete Post (Admin)"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              )}
+
+              {!isLocked && (
+                <button
+                  onClick={handleBookmark}
+                  className={`p-2 rounded-full glass-panel border border-white/10 transition-all ${
+                    mounted && isBookmarked ? 'text-violet-400 bg-white/20' : 'text-white/80 hover:text-white hover:bg-white/20'
+                  }`}
+                  title="Save to bookmarks"
+                >
+                  <Bookmark className={`w-3.5 h-3.5 ${mounted && isBookmarked ? 'fill-violet-400' : ''}`} />
+                </button>
+              )}
+            </div>
           </div>
+
+          {/* Hover Bottom Action & Metadata Overlay */}
+          {!isLocked && (
+            <div className="absolute bottom-0 left-0 right-0 p-4 z-10 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+              <h3 className="font-display font-semibold text-sm text-white line-clamp-2 drop-shadow-md mb-2">
+                {media.title}
+              </h3>
+
+              <div className="flex items-center justify-between text-xs text-gray-300 pt-1">
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-1 text-[11px]">
+                    <Eye className="w-3.5 h-3.5 text-gray-400" />
+                    {media.views.toLocaleString()}
+                  </span>
+                  <button
+                    onClick={handleLike}
+                    className="flex items-center gap-1 text-[11px] hover:text-red-400 transition-colors group/like"
+                  >
+                    <Heart className={`w-3.5 h-3.5 transition-transform group-hover/like:scale-125 ${mounted && isLiked ? 'text-red-400 fill-red-400' : 'text-gray-400'}`} />
+                    {likesCount.toLocaleString()}
+                  </button>
+                </div>
+
+                <button
+                  onClick={handleShare}
+                  className="p-1.5 rounded-full hover:bg-white/10 text-gray-300 hover:text-white transition-colors"
+                  title="Share"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
-      </div>
-    </motion.div>
+      </motion.div>
+
+      {/* Membership Pass Modal */}
+      <MembershipModal isOpen={isMembershipOpen} onClose={() => setIsMembershipOpen(false)} />
+    </>
   );
 }
