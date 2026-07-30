@@ -23,7 +23,12 @@ export default function AdsterraManager() {
       document.removeEventListener('click', handleGlobalClick);
     };
 
-    const handleGlobalClick = () => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      // Skip click count increment for navigation links, header elements, buttons or anchors
+      const isNavLink = target.closest('header') || target.closest('a') || target.closest('button');
+      if (isNavLink) return;
+
       clickCount += 1;
       // Triggers Popunder ONLY after 2 global user interaction clicks
       if (clickCount >= 2) {
