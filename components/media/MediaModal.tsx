@@ -117,7 +117,7 @@ export default function MediaModal({ media, onClose }: MediaModalProps) {
               <h2 className="font-display font-bold text-lg text-white mb-1.5 leading-snug">
                 {media.title}
               </h2>
-              <p className="text-xs text-gray-300 leading-relaxed mb-3">
+              <p className="text-xs text-gray-300 leading-relaxed mb-3 line-clamp-2 sm:line-clamp-3">
                 {media.description}
               </p>
 

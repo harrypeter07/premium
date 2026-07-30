@@ -9,7 +9,8 @@ import VideoPlayer from '@/components/media/VideoPlayer';
 import MasonryFeed from '@/components/feed/MasonryFeed';
 import {
   Heart, Bookmark, Share2, Sparkles, ArrowLeft,
-  MessageSquare, Star, Maximize2, X, Send, AlertCircle, Eye, User
+  MessageSquare, Star, Maximize2, X, Send, AlertCircle, Eye, User,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import {
   getSavedBookmarks, toggleBookmarkStorage, getSavedLikes, toggleLikeStorage,
@@ -80,6 +81,24 @@ export default function MediaDetailPage() {
       addToWatchHistory(media.id);
     }
   }, [media]);
+
+  const currentIndex = mediaList.findIndex((m) => m.id === media?.id);
+
+  const handleNext = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (mediaList.length <= 1) return;
+    const nextIndex = (currentIndex + 1) % mediaList.length;
+    const nextMedia = mediaList[nextIndex];
+    router.push(`/media/${nextMedia.id}`);
+  };
+
+  const handlePrev = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (mediaList.length <= 1) return;
+    const prevIndex = (currentIndex - 1 + mediaList.length) % mediaList.length;
+    const prevMedia = mediaList[prevIndex];
+    router.push(`/media/${prevMedia.id}`);
+  };
 
   if (loading) {
     return (
@@ -173,17 +192,36 @@ export default function MediaDetailPage() {
               autoPlay={true}
             />
           ) : (
-            <div className="relative group w-full aspect-[4/5] rounded-3xl overflow-hidden glass-card border border-white/10 shadow-2xl bg-zinc-950">
+            <div className="relative group w-full aspect-[4/5] rounded-3xl overflow-hidden glass-card border border-white/10 shadow-2xl bg-zinc-950 flex items-center justify-center">
               <img
                 src={getCloudflareImageUrl(media.url, 1200)}
                 alt={displayTitle}
                 className="w-full h-full object-cover cursor-pointer"
                 onClick={() => setIsFullscreen(true)}
               />
+
+              {/* Prev Button Navigation */}
+              <button
+                onClick={handlePrev}
+                className="absolute left-4 p-2.5 sm:p-3 rounded-full bg-[#0d0917]/80 backdrop-blur-md text-white border border-white/20 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300 shadow-2xl hover:bg-violet-600/80 z-20"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+
+              {/* Next Button Navigation */}
+              <button
+                onClick={handleNext}
+                className="absolute right-4 p-2.5 sm:p-3 rounded-full bg-[#0d0917]/80 backdrop-blur-md text-white border border-white/20 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300 shadow-2xl hover:bg-violet-600/80 z-20"
+                aria-label="Next image"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+
               {/* Fullscreen Button Overlay */}
               <button
                 onClick={() => setIsFullscreen(true)}
-                className="absolute bottom-4 right-4 p-3 rounded-full bg-black/60 backdrop-blur-md text-white border border-white/20 opacity-90 hover:opacity-100 transition-all shadow-2xl flex items-center gap-2 text-xs font-semibold"
+                className="absolute bottom-4 right-4 p-3 rounded-full bg-black/60 backdrop-blur-md text-white border border-white/20 opacity-90 hover:opacity-100 transition-all shadow-2xl flex items-center gap-2 text-xs font-semibold z-10"
               >
                 <Maximize2 className="w-4 h-4" />
                 <span>Fullscreen</span>
@@ -311,6 +349,9 @@ export default function MediaDetailPage() {
             </div>
           </div>
 
+          {/* Adsterra 300x250 rect ad inside sidebar */}
+          <AdsterraAd type="BANNER_300X250" />
+
           {/* Adsterra 160x300 Vertical Banner Ad */}
           <AdsterraAd type="BANNER_160X300" />
         </div>
@@ -334,6 +375,22 @@ export default function MediaDetailPage() {
             <X className="w-6 h-6" />
           </button>
           <div className="relative max-w-5xl max-h-[90vh] w-full h-full flex flex-col items-center justify-center">
+            {/* Prev Lightbox navigation */}
+            <button
+              onClick={handlePrev}
+              className="absolute left-4 p-4 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/10 transition-all z-50"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+
+            {/* Next Lightbox navigation */}
+            <button
+              onClick={handleNext}
+              className="absolute right-4 p-4 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/10 transition-all z-50"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+
             <img
               src={media.url}
               alt={displayTitle}
