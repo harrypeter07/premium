@@ -6,6 +6,7 @@ import Footer from '@/components/ui/Footer';
 import GDPRConsentBanner from '@/components/ui/gdpr-banner';
 import AnalyticsTracker from '@/components/analytics/AnalyticsTracker';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import AdsterraManager from '@/components/monetization/AdsterraManager';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -49,11 +50,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {children}
           </main>
 
-          {/* Adsterra Global Popunder (Loads after interactivity) */}
-          <Script
-            src="https://pl30595675.effectivecpmnetwork.com/19/65/40/196540cfdbb2eec6ba55744cc20886e7.js"
-            strategy="afterInteractive"
-          />
+          {/* Adsterra popunder user interaction manager */}
+          <AdsterraManager />
 
           {/* Adsterra Global Social Bar (Lazy loaded) */}
           <Script
