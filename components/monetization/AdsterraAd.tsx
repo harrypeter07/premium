@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface AdsterraAdProps {
   type: 
@@ -14,6 +14,8 @@ interface AdsterraAdProps {
 }
 
 export default function AdsterraAd({ type }: AdsterraAdProps) {
+  const [shouldRender, setShouldRender] = useState(false);
+
   // Map types to Adsterra keys, widths and heights
   const adMap: Record<string, { key: string; width: number; height: number }> = {
     BANNER_160X300: { key: 'd62d3a0f9e4cdbd384c5de81d2fcbdd9', width: 160, height: 300 },
@@ -24,9 +26,47 @@ export default function AdsterraAd({ type }: AdsterraAdProps) {
     BANNER_300X250: { key: '194178c7fb9f316a7f28fc219d192ec1', width: 300, height: 250 },
   };
 
+  useEffect(() => {
+    // Delay ad frame loading by 1.5 seconds so it mounts gracefully after main content load finishes
+    const timer = setTimeout(() => {
+      setShouldRender(true);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // 1. Loading Skeletons
+  if (!shouldRender) {
+    if (type === 'NATIVE_BANNER') {
+      return (
+        <div className="flex flex-col items-center justify-center my-3 w-full">
+          <span className="text-[9px] uppercase font-mono text-zinc-600 mb-1.5 tracking-widest animate-pulse">Loading Sponsor Link...</span>
+          <div className="w-full h-32 rounded-2xl bg-zinc-900/60 border border-white/5 animate-pulse flex items-center justify-center">
+            <span className="text-[10px] text-zinc-500 font-mono">Premium Fashion Feature</span>
+          </div>
+        </div>
+      );
+    }
+
+    const ad = adMap[type];
+    if (!ad) return null;
+
+    return (
+      <div className="flex flex-col items-center justify-center my-3 w-full">
+        <span className="text-[9px] uppercase font-mono text-zinc-600 mb-1.5 tracking-widest animate-pulse">Loading Sponsor...</span>
+        <div 
+          style={{ width: ad.width, height: ad.height }} 
+          className="rounded-2xl bg-zinc-900/60 border border-white/5 animate-pulse flex items-center justify-center"
+        >
+          <span className="text-[9px] text-zinc-600 font-mono">{ad.width}x{ad.height}</span>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. Active Rendered Frames
   if (type === 'NATIVE_BANNER') {
     return (
-      <div className="flex flex-col items-center justify-center my-3 overflow-hidden w-full">
+      <div className="flex flex-col items-center justify-center my-3 overflow-hidden w-full transition-opacity duration-500 opacity-100">
         <span className="text-[9px] uppercase font-mono text-zinc-500 mb-1 tracking-widest">Sponsored Link</span>
         <iframe
           srcDoc={`
@@ -57,7 +97,7 @@ export default function AdsterraAd({ type }: AdsterraAdProps) {
   if (!ad) return null;
 
   return (
-    <div className="flex flex-col items-center justify-center my-3 overflow-hidden w-full">
+    <div className="flex flex-col items-center justify-center my-3 overflow-hidden w-full transition-opacity duration-500 opacity-100">
       <span className="text-[9px] uppercase font-mono text-zinc-500 mb-1 tracking-widest">Sponsored Link</span>
       <iframe
         srcDoc={`

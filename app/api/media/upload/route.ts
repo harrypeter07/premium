@@ -41,7 +41,20 @@ export async function POST(req: Request) {
       }
     }
 
-    const fileName = purpose ? `${purpose}_${Date.now()}` : file.name;
+    let fileName = file.name;
+    if (purpose) {
+      fileName = `${purpose}_${Date.now()}`;
+    } else {
+      const extMatch = file.name.match(/\.([a-zA-Z0-9]+)$/);
+      const extension = extMatch ? extMatch[1] : 'png';
+      const baseName = file.name.replace(/\.[^/.]+$/, "");
+      const cleanBase = baseName
+        .toLowerCase()
+        .replace(/(chatgpt|openai|gemini|gpt|claud|copilot)/gi, 'smr_archive')
+        .replace(/[^a-z0-9_]/gi, '_')
+        .replace(/_+/g, '_');
+      fileName = `${cleanBase}_${Date.now()}.${extension}`;
+    }
     const uploadFormData = new FormData();
     uploadFormData.append('file', base64File);
     uploadFormData.append('fileName', fileName);
