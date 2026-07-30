@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cleanOrGenerateTitle, cleanOrGenerateDescription } from '@/lib/utils/captionHelper';
 import AdsterraAd from '@/components/monetization/AdsterraAd';
+import { getCloudflareImageUrl } from '@/lib/media/cloudflare';
 
 export default function MediaDetailPage() {
   const params = useParams();
@@ -174,7 +175,7 @@ export default function MediaDetailPage() {
           ) : (
             <div className="relative group w-full aspect-[4/5] rounded-3xl overflow-hidden glass-card border border-white/10 shadow-2xl bg-zinc-950">
               <img
-                src={media.url}
+                src={getCloudflareImageUrl(media.url, 1200)}
                 alt={displayTitle}
                 className="w-full h-full object-cover cursor-pointer"
                 onClick={() => setIsFullscreen(true)}

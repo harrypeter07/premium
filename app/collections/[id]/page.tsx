@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { cleanOrGenerateTitle } from '@/lib/utils/captionHelper';
 import { getPersistentCollections, savePersistentCollections, getPersistentUploadedMedia } from '@/lib/storage/localStorage';
+import { getCloudflareImageUrl } from '@/lib/media/cloudflare';
 
 export default function CollectionDetailPage() {
   const params = useParams();
@@ -143,7 +144,7 @@ export default function CollectionDetailPage() {
       {/* Hero Showcase Card */}
       <div className="relative rounded-3xl overflow-hidden border border-white/10 shadow-2xl bg-zinc-950 min-h-[380px] flex flex-col justify-end p-8">
         <img
-          src={collection.coverImage}
+          src={getCloudflareImageUrl(collection.coverImage, 1200)}
           alt={collection.name}
           className="absolute inset-0 w-full h-full object-cover"
         />
@@ -237,7 +238,7 @@ export default function CollectionDetailPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {photoItems.map((item) => (
               <Link key={item.id} href={`/media/${item.id}`} className="group relative aspect-[3/4] rounded-2xl overflow-hidden border border-white/10 hover:border-violet-500/50 shadow-lg transition-all bg-zinc-900">
-                <img src={item.thumbnailUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                <img src={getCloudflareImageUrl(item.thumbnailUrl, 800)} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90" />
                 <div className="absolute bottom-3 left-3 right-3">
                   <p className="text-xs font-semibold text-white line-clamp-1">{cleanOrGenerateTitle(item.title)}</p>
@@ -255,7 +256,7 @@ export default function CollectionDetailPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {videoItems.map((item) => (
               <Link key={item.id} href={`/media/${item.id}`} className="group relative aspect-video rounded-2xl overflow-hidden border border-white/10 hover:border-red-500/50 shadow-lg transition-all bg-zinc-900">
-                <img src={item.thumbnailUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                <img src={getCloudflareImageUrl(item.thumbnailUrl, 800)} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90" />
                 <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
                   <p className="text-xs font-semibold text-white line-clamp-1">{cleanOrGenerateTitle(item.title)}</p>

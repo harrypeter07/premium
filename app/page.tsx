@@ -46,9 +46,9 @@ export default function HomePage() {
   const trendingItems = mediaList.filter((m) => m.isTrending).slice(0, 5);
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 space-y-8">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 space-y-4">
       {/* Creator Hero Showcase Banner */}
-      <div className="relative rounded-3xl overflow-hidden border border-white/10 p-5 sm:p-8 shadow-2xl bg-gradient-to-r from-[#140f21] via-[#1a142c] to-[#140f21]">
+      <div className="relative rounded-3xl overflow-hidden border border-white/10 p-4 sm:p-6 shadow-2xl bg-gradient-to-r from-[#140f21] via-[#1a142c] to-[#140f21]">
         <div className="absolute -top-24 -left-24 w-96 h-96 bg-brand-purple/20 blur-[120px] pointer-events-none" />
         <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-brand-accent/20 blur-[120px] pointer-events-none" />
 

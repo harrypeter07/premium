@@ -65,7 +65,7 @@ export default function AdsterraAd({ type }: AdsterraAdProps) {
   }, [type]);
 
   return (
-    <div className="flex flex-col items-center justify-center my-6 overflow-hidden min-h-[50px] w-full">
+    <div className="flex flex-col items-center justify-center my-2 overflow-hidden min-h-[50px] w-full">
       <span className="text-[9px] uppercase font-mono text-zinc-500 mb-1.5 tracking-widest">Sponsored Link</span>
       <div ref={containerRef} className="w-full flex justify-center items-center" />
     </div>

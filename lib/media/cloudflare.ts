@@ -10,6 +10,10 @@ export function getCloudflareImageUrl(
   if (originalUrl.includes('unsplash.com')) {
     return `${originalUrl.split('?')[0]}?auto=format&fit=crop&w=${width}&q=${quality}`;
   }
+  if (originalUrl.includes('ik.imagekit.io')) {
+    const baseUrl = originalUrl.split('?')[0];
+    return `${baseUrl}?tr=pr-true,w-${width},q-${quality},f-auto`;
+  }
   const cfDomain = process.env.CLOUDFLARE_R2_PUBLIC_DOMAIN || 'https://pub-cloudflare-r2.r2.dev';
   if (originalUrl.startsWith(cfDomain)) {
     return `${cfDomain}/cdn-cgi/image/width=${width},quality=${quality},format=${format}/${originalUrl.replace(cfDomain + '/', '')}`;

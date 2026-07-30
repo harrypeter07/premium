@@ -110,7 +110,7 @@ export default function CreatorPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 pb-16">
+    <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 space-y-6 pb-8">
       {/* Cover Header Stage */}
       <div className="relative rounded-3xl overflow-hidden glass-panel border border-white/10 h-72 sm:h-96 shadow-2xl bg-zinc-950">
         {(editCoverPreview || profile.coverUrl) && (
