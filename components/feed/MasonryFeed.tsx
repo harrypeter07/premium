@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { MediaItem } from '@/lib/types';
 import MediaCard from '../media/MediaCard';
-import AdSenseSlot from '../monetization/AdSenseSlot';
+import AdsterraAd from '../monetization/AdsterraAd';
 import MediaModal from '../media/MediaModal';
 import { Sparkles, Video, Image as ImageIcon, Loader2 } from 'lucide-react';
 
@@ -91,7 +91,7 @@ export default function MasonryFeed({ items, showAdSlots = true }: MasonryFeedPr
             />
             {/* Inject Native Ad Card every 6 items */}
             {showAdSlots && idx === 5 && (
-              <AdSenseSlot type="NATIVE_CARD" />
+              <AdsterraAd type="BANNER_160X300" />
             )}
           </React.Fragment>
         ))}

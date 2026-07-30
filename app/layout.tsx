@@ -1,8 +1,8 @@
 import React, { Suspense } from 'react';
 import type { Metadata, Viewport } from 'next';
+import Script from 'next/script';
 import Navbar from '@/components/ui/Navbar';
 import Footer from '@/components/ui/Footer';
-import AdSenseSlot from '@/components/monetization/AdSenseSlot';
 import GDPRConsentBanner from '@/components/ui/gdpr-banner';
 import AnalyticsTracker from '@/components/analytics/AnalyticsTracker';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -31,18 +31,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className="dark scroll-smooth">
       <head>
-        {/* Literal Hardcoded Google AdSense Site Verification Meta Tag */}
-        <meta name="google-adsense-account" content="ca-pub-4236633699270444" />
-
         {/* Favicon Icon Link */}
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-
-        {/* Literal Hardcoded Google AdSense Auto-Ads Script Snippet */}
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4236633699270444"
-          crossOrigin="anonymous"
-        />
       </head>
       <body className="bg-[#120e1d] text-gray-100 min-h-screen flex flex-col antialiased selection:bg-brand-purple selection:text-white">
         <TooltipProvider>
@@ -59,8 +49,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {children}
           </main>
 
-          {/* Sticky Mobile Anchor Ad */}
-          <AdSenseSlot type="STICKY_ANCHOR" />
+          {/* Adsterra Global Popunder (Loads after interactivity) */}
+          <Script
+            src="https://pl30595675.effectivecpmnetwork.com/19/65/40/196540cfdbb2eec6ba55744cc20886e7.js"
+            strategy="afterInteractive"
+          />
+
+          {/* Adsterra Global Social Bar (Lazy loaded) */}
+          <Script
+            src="https://pl30595678.effectivecpmnetwork.com/4e/8e/8c/4e8e8ceff1a7bc1a376b6fc7e377ccb7.js"
+            strategy="lazyOnload"
+          />
 
           {/* GDPR Cookie Consent Banner */}
           <GDPRConsentBanner />

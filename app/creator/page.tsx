@@ -7,6 +7,7 @@ import { CREATOR_PROFILE } from '@/lib/data/mockData';
 import { Camera, Video, Share2, MapPin, Eye, Users, Film, Send, CheckCircle, Sparkles, Edit, Upload, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import AdsterraAd from '@/components/monetization/AdsterraAd';
 
 export default function CreatorPage() {
   const [formSubmitted, setFormSubmitted] = useState(false);
@@ -260,6 +261,9 @@ export default function CreatorPage() {
           <p className="font-display font-black text-2xl sm:text-3xl text-white">{CREATOR_PROFILE.stats.monthlyReach}</p>
         </div>
       </div>
+
+      {/* Adsterra Native Banner Ad unit */}
+      <AdsterraAd type="NATIVE_BANNER" />
 
       {/* Press Kit & Sponsorship Inquiry Form */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">

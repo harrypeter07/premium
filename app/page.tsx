@@ -8,6 +8,7 @@ import { getRecommendedFeed } from '@/lib/recommendations';
 import MasonryFeed from '@/components/feed/MasonryFeed';
 import CategoryBar from '@/components/feed/CategoryBar';
 import MembershipModal from '@/components/monetization/MembershipModal';
+import AdsterraAd from '@/components/monetization/AdsterraAd';
 import { MediaItem } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -122,6 +123,9 @@ export default function HomePage() {
         />
       </div>
 
+      {/* Adsterra Native Banner Ad unit */}
+      <AdsterraAd type="NATIVE_BANNER" />
+
       {/* Empty State / Uploaded Media Grid / Skeleton Loader */}
       {loading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 py-8">
@@ -188,6 +192,11 @@ export default function HomePage() {
           {/* Main Recommendation Feed Section */}
           <div className="space-y-4 pt-2">
             <MasonryFeed items={recommendedItems} />
+          </div>
+
+          {/* Adsterra 320x50 Banner at Page Bottom */}
+          <div className="pt-4">
+            <AdsterraAd type="BANNER_320X50" />
           </div>
         </>
       )}

@@ -22,6 +22,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cleanOrGenerateTitle, cleanOrGenerateDescription } from '@/lib/utils/captionHelper';
+import AdsterraAd from '@/components/monetization/AdsterraAd';
 
 export default function MediaDetailPage() {
   const params = useParams();
@@ -189,6 +190,9 @@ export default function MediaDetailPage() {
             </div>
           )}
 
+          {/* Adsterra Native Banner Ad unit */}
+          <AdsterraAd type="NATIVE_BANNER" />
+
           {/* Details & Description Card */}
           <div className="glass-panel p-8 rounded-3xl border border-white/10 space-y-4">
             <div className="flex items-center justify-between">
@@ -305,6 +309,9 @@ export default function MediaDetailPage() {
               </button>
             </div>
           </div>
+
+          {/* Adsterra 160x300 Vertical Banner Ad */}
+          <AdsterraAd type="BANNER_160X300" />
         </div>
       </div>
 
