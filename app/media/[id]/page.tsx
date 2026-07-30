@@ -392,7 +392,7 @@ export default function MediaDetailPage() {
             </button>
 
             <img
-              src={media.url}
+              src={getCloudflareImageUrl(media.url, 1600)}
               alt={displayTitle}
               className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl"
             />

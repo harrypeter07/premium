@@ -12,7 +12,13 @@ export function getCloudflareImageUrl(
   }
   if (originalUrl.includes('ik.imagekit.io')) {
     const baseUrl = originalUrl.split('?')[0];
-    return `${baseUrl}?tr=pr-true,w-${width},q-${quality},f-auto`;
+    const optimized = `${baseUrl}?tr=pr-true,w-${width},q-${quality},f-auto`;
+    try {
+      const encoded = typeof window !== 'undefined' ? window.btoa(optimized) : Buffer.from(optimized).toString('base64');
+      return `/api/media/proxy?key=${encoded}`;
+    } catch {
+      return `/api/media/proxy?url=${encodeURIComponent(optimized)}`;
+    }
   }
   const cfDomain = process.env.CLOUDFLARE_R2_PUBLIC_DOMAIN || 'https://pub-cloudflare-r2.r2.dev';
   if (originalUrl.startsWith(cfDomain)) {

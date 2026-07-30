@@ -8,6 +8,7 @@ import { MediaItem } from '@/lib/types';
 import VideoPlayer from './VideoPlayer';
 import { getSavedBookmarks, toggleBookmarkStorage, getSavedLikes, toggleLikeStorage, addToWatchHistory } from '@/lib/storage/localStorage';
 import { MEDIA_ITEMS } from '@/lib/data/mockData';
+import { getCloudflareImageUrl } from '@/lib/media/cloudflare';
 
 interface MediaModalProps {
   media: MediaItem | null;
@@ -89,12 +90,10 @@ export default function MediaModal({ media, onClose }: MediaModalProps) {
               </div>
             ) : (
               <div className="relative w-full h-full min-h-[380px] max-h-[70vh] flex items-center justify-center p-4">
-                <Image
-                  src={media.url}
+                <img
+                  src={getCloudflareImageUrl(media.url, 1200)}
                   alt={media.altText || media.title}
-                  fill
-                  className="object-contain"
-                  priority
+                  className="max-w-full max-h-[65vh] object-contain rounded-2xl shadow-xl"
                 />
               </div>
             )}
