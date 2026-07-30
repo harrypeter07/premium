@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server';
 
-const ADMIN_USER = {
-  email: 'admin@smriti.com',
-  password: 'wrongpassword',
-  name: 'Smriti Shah Admin',
-  role: 'ADMIN',
-};
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@smriti.com';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'smritishah123';
+const ADMIN_NAME = 'Smriti Shah Admin';
+const ADMIN_ROLE = 'ADMIN';
 
 export async function POST(req: Request) {
   try {
@@ -15,13 +13,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
-    if (email.toLowerCase() === ADMIN_USER.email.toLowerCase() && password === ADMIN_USER.password) {
+    if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase() && password === ADMIN_PASSWORD) {
       const response = NextResponse.json({
         success: true,
-        user: { email: ADMIN_USER.email, name: ADMIN_USER.name, role: ADMIN_USER.role },
+        user: { email: ADMIN_EMAIL, name: ADMIN_NAME, role: ADMIN_ROLE },
       });
 
-      // Non-httpOnly so the client JS can also read/write it for sync
+      // Set cookie for authorization mapping
       response.cookies.set('smr_admin_session', 'authorized', {
         httpOnly: false,
         secure: process.env.NODE_ENV === 'production',

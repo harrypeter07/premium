@@ -209,7 +209,7 @@ export default function AdminDashboardPage() {
                     type="email"
                     required
                     autoFocus
-                    placeholder="admin@smriti.com"
+                    placeholder="Enter your admin email"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     className="h-10 border-white/10 focus:border-violet-500"

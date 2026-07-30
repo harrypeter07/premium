@@ -1,34 +1,60 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
+    <!-- Deep luxury background gradient -->
     <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#7c3aed"/>
-      <stop offset="50%" stop-color="#4c1d95"/>
-      <stop offset="100%" stop-color="#d946ef"/>
+      <stop offset="0%" stop-color="#0f0b1a"/>
+      <stop offset="50%" stop-color="#180f2b"/>
+      <stop offset="100%" stop-color="#090510"/>
     </linearGradient>
 
-    <linearGradient id="text-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ffffff"/>
-      <stop offset="100%" stop-color="#f5d0fe"/>
+    <!-- Amethyst neon aura gradient -->
+    <linearGradient id="aura-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#ec4899"/>
     </linearGradient>
 
-    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="16" result="blur" />
+    <!-- Metallic Gold monogram gradient -->
+    <linearGradient id="gold-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#b58925"/>
+      <stop offset="30%" stop-color="#e2c175"/>
+      <stop offset="50%" stop-color="#fdf3cd"/>
+      <stop offset="70%" stop-color="#d4af37"/>
+      <stop offset="100%" stop-color="#aa7c11"/>
+    </linearGradient>
+
+    <!-- Outer golden ring glow -->
+    <filter id="gold-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="10" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <!-- Purple ambient glow -->
+    <filter id="purple-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="25" result="blur" />
       <feComposite in="SourceGraphic" in2="blur" operator="over" />
     </filter>
   </defs>
 
-  <rect width="512" height="512" rx="128" fill="#0d0917"/>
-  <rect x="32" y="32" width="448" height="448" rx="100" fill="url(#bg-grad)" filter="url(#glow)"/>
-  <rect x="48" y="48" width="416" height="416" rx="88" fill="#120e1d" fill-opacity="0.25" stroke="#ffffff" stroke-opacity="0.2" stroke-width="4"/>
+  <!-- Solid base canvas -->
+  <rect width="512" height="512" rx="140" fill="url(#bg-grad)"/>
 
-  <text x="256" y="335" 
-        font-family="-apple-system, BlinkMacSystemFont, 'Didot', 'Playfair Display', 'Cinzel', serif" 
-        font-weight="900" 
-        font-size="240" 
-        letter-spacing="-12" 
-        text-anchor="middle" 
-        fill="url(#text-grad)">SS</text>
+  <!-- Ambient background glow -->
+  <circle cx="256" cy="256" r="160" fill="url(#aura-grad)" opacity="0.2" filter="url(#purple-glow)"/>
 
-  <path d="M 370 110 L 380 140 L 410 150 L 380 160 L 370 190 L 360 160 L 330 150 L 360 140 Z" fill="#f472b6"/>
-  <circle cx="140" cy="380" r="8" fill="#c084fc"/>
+  <!-- Intersecting Golden Astrological Rings representing precision & visual framing -->
+  <circle cx="256" cy="256" r="190" fill="none" stroke="url(#gold-grad)" stroke-width="2.5" opacity="0.3"/>
+  <circle cx="256" cy="256" r="176" fill="none" stroke="url(#gold-grad)" stroke-width="4" filter="url(#gold-glow)"/>
+
+  <!-- Modern Luxury Intertwined Monogram "SS" using vector paths -->
+  <g transform="translate(180, 110) scale(0.9)" filter="url(#gold-glow)">
+    <!-- First 'S' (top-left aligned, elegant high-fashion serif flow) -->
+    <path d="M 120 20 C 120 20 60 10 30 40 C 0 70 10 110 50 130 C 90 150 110 160 110 190 C 110 220 70 240 30 220 C -10 200 -5 160 -5 160 L -10 160" fill="none" stroke="url(#gold-grad)" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- Second 'S' (bottom-right offset, intertwined back-to-back style) -->
+    <path d="M 180 60 C 180 60 120 50 90 80 C 60 110 70 150 110 170 C 150 190 170 200 170 230 C 170 260 130 280 90 260 C 50 240 55 200 55 200 L 50 200" fill="none" stroke="url(#gold-grad)" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Sparkles representation representing haute couture magic -->
+  <path d="M 370 120 L 380 145 L 405 155 L 380 165 L 370 190 L 360 165 L 335 155 L 360 145 Z" fill="url(#gold-grad)" filter="url(#gold-glow)"/>
+  <path d="M 130 350 L 135 362 L 147 367 L 135 372 L 130 384 L 125 372 L 113 367 L 125 362 Z" fill="#ec4899" opacity="0.7"/>
 </svg>
