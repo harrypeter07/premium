@@ -52,9 +52,9 @@ export default function HomePage() {
         <div className="absolute -top-24 -left-24 w-96 h-96 bg-brand-purple/20 blur-[120px] pointer-events-none" />
         <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-brand-accent/20 blur-[120px] pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col lg:flex-row items-stretch justify-between gap-6">
+        <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6">
           {/* Creator Details featuring Smriti Shah (@smriti.shans) */}
-          <div className="space-y-3.5 w-full lg:w-5/12 text-center lg:text-left flex flex-col justify-center">
+          <div className="space-y-3.5 w-full lg:w-7/12 text-center lg:text-left flex flex-col justify-center">
             <Badge variant="default" className="gap-2 border-violet-500/40 text-violet-300 bg-violet-600/20 shadow-[0_0_15px_rgba(124,58,237,0.3)] w-fit mx-auto lg:mx-0">
               <Sparkles className="w-3.5 h-3.5 text-violet-400" />
               <span>Smriti Shah · Official Visual Portfolio</span>
@@ -67,6 +67,11 @@ export default function HomePage() {
             <p className="text-gray-300 text-xs leading-relaxed">
               Exclusive high-fashion editorials, architectural photography, and curated archives by <strong className="text-violet-300">Smriti Shah</strong>.
             </p>
+
+            {/* Adsterra Horizontal Banner inside Hero (Desktop only) */}
+            <div className="hidden lg:block w-full max-w-[468px] pt-1">
+              <AdsterraAd type="BANNER_468X60" />
+            </div>
 
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 pt-1">
               <Button
@@ -87,14 +92,9 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Adsterra Vertical Banner in Hero (Desktop only) */}
-          <div className="hidden lg:flex w-full lg:w-3/12 shrink-0 items-center justify-center bg-white/5 border border-white/5 rounded-2xl p-2">
-            <AdsterraAd type="BANNER_160X300" />
-          </div>
-
           {/* Featured Hero Media Card */}
           {featuredItem && (
-            <div className="w-full lg:w-3/12 shrink-0 flex items-center justify-center">
+            <div className="w-full lg:w-4/12 shrink-0">
               <Link href={`/media/${featuredItem.id}`} className="block w-full group relative rounded-2xl overflow-hidden border border-brand-purple/40 shadow-neon">
                 <div className="relative aspect-[3/4] w-full bg-zinc-900">
                   <img
@@ -120,102 +120,104 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div className="flex flex-col xl:flex-row gap-6 items-start">
-        {/* Main visual feed stream */}
-        <div className="flex-grow min-w-0 space-y-4 w-full">
-          {/* Category Pills Bar */}
-          <div className="space-y-2">
-            <CategoryBar
-              activeCategory={activeCategory}
-              onSelectCategory={(slug) => setActiveCategory(slug)}
-            />
-          </div>
+      {/* Category Pills Bar */}
+      <div className="space-y-2">
+        <CategoryBar
+          activeCategory={activeCategory}
+          onSelectCategory={(slug) => setActiveCategory(slug)}
+        />
+      </div>
 
-          {/* Adsterra Native Banner Ad unit */}
-          <AdsterraAd type="NATIVE_BANNER" />
+      {/* Adsterra Native Banner Ad unit */}
+      <AdsterraAd type="NATIVE_BANNER" />
 
-          {/* Empty State / Uploaded Media Grid / Skeleton Loader */}
-          {loading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 py-8">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
-                <div key={n} className="aspect-[3/4] rounded-2xl bg-zinc-800/60 animate-pulse border border-zinc-800" />
-              ))}
-            </div>
-          ) : mediaList.length === 0 ? (
-            <Card className="max-w-md mx-auto p-8 border-dashed border-white/20 text-center space-y-4 bg-[#140f21]/80">
-              <div className="w-12 h-12 rounded-full bg-brand-purple/10 border border-brand-purple/20 flex items-center justify-center text-brand-purple mx-auto">
-                <Film className="w-6 h-6" />
-              </div>
-              <div className="space-y-1">
-                <CardTitle className="text-lg">No Archives Published Yet</CardTitle>
-                <CardDescription className="text-xs">
-                  This visual portfolio is ready. Log in to the Admin Studio dashboard to upload your first high-fashion editorial.
-                </CardDescription>
-              </div>
-              <Link href="/admin">
-                <Button variant="outline" size="sm" className="mt-2 gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-brand-purple" />
-                  <span>Access Studio Login</span>
-                </Button>
-              </Link>
-            </Card>
-          ) : (
-            <>
-              {/* Trending Carousel Section */}
-              {trendingItems.length > 0 && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Flame className="w-4 h-4 text-brand-accent" />
-                      <h2 className="font-display font-bold text-lg text-white">Trending Archives</h2>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-                    {trendingItems.map((item) => (
-                      <Link
-                        key={item.id}
-                        href={`/media/${item.id}`}
-                        className="group relative rounded-2xl overflow-hidden border border-white/10 hover:border-brand-purple/50 transition-all bg-[#181326]"
-                      >
-                        <div className="relative aspect-[4/5] w-full">
-                          <img
-                            src={item.thumbnailUrl}
-                            alt={item.title}
-                            loading="lazy"
-                            decoding="async"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-[#120e1d]/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                          <div className="absolute bottom-2 left-2 right-2">
-                            <p className="text-xs font-semibold text-white line-clamp-1">{cleanOrGenerateTitle(item.title)}</p>
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Main Recommendation Feed Section */}
-              <div className="space-y-4 pt-2">
-                <MasonryFeed items={recommendedItems} />
-              </div>
-
-              {/* Adsterra 320x50 Banner at Page Bottom */}
-              <div className="pt-4">
-                <AdsterraAd type="BANNER_320X50" />
-              </div>
-            </>
-          )}
+      {/* Empty State / Uploaded Media Grid / Skeleton Loader */}
+      {loading ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 py-8">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+            <div key={n} className="aspect-[3/4] rounded-2xl bg-zinc-800/60 animate-pulse border border-zinc-800" />
+          ))}
         </div>
-
-        {/* Desktop Sticky Sidebar Ad block */}
-        <div className="hidden xl:flex flex-col gap-4 w-60 shrink-0 sticky top-20">
-          <div className="glass-panel p-4 rounded-3xl border border-white/10 flex flex-col items-center justify-center space-y-2">
-            <AdsterraAd type="BANNER_160X300" />
-            <span className="text-[9px] text-zinc-500 font-mono uppercase tracking-wider text-center block pt-2 border-t border-white/5 w-full">Sponsored Column</span>
+      ) : mediaList.length === 0 ? (
+        <Card className="max-w-md mx-auto p-8 border-dashed border-white/20 text-center space-y-4 bg-[#140f21]/80">
+          <div className="w-12 h-12 rounded-full bg-brand-purple/10 border border-brand-purple/20 flex items-center justify-center text-brand-purple mx-auto">
+            <Film className="w-6 h-6" />
           </div>
+          <div className="space-y-1">
+            <CardTitle className="text-lg">No Archives Published Yet</CardTitle>
+            <CardDescription className="text-xs">
+              This visual portfolio is ready. Log in to the Admin Studio dashboard to upload your first high-fashion editorial.
+            </CardDescription>
+          </div>
+          <Link href="/admin">
+            <Button variant="outline" size="sm" className="mt-2 gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-brand-purple" />
+              <span>Access Studio Login</span>
+            </Button>
+          </Link>
+        </Card>
+      ) : (
+        <>
+          {/* Trending Carousel Section */}
+          {trendingItems.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Flame className="w-4 h-4 text-brand-accent" />
+                  <h2 className="font-display font-bold text-lg text-white">Trending Archives</h2>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                {trendingItems.map((item) => (
+                  <Link
+                    key={item.id}
+                    href={`/media/${item.id}`}
+                    className="group relative rounded-2xl overflow-hidden border border-white/10 hover:border-brand-purple/50 transition-all bg-[#181326]"
+                  >
+                    <div className="relative aspect-[4/5] w-full">
+                      <img
+                        src={item.thumbnailUrl}
+                        alt={item.title}
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#120e1d]/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="absolute bottom-2 left-2 right-2">
+                        <p className="text-xs font-semibold text-white line-clamp-1">{cleanOrGenerateTitle(item.title)}</p>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Main Recommendation Feed Section */}
+          <div className="space-y-4 pt-2">
+            <MasonryFeed items={recommendedItems} />
+          </div>
+
+          {/* Adsterra 320x50 Banner at Page Bottom */}
+          <div className="pt-4">
+            <AdsterraAd type="BANNER_320X50" />
+          </div>
+        </>
+      )}
+
+      {/* Floating Side Ads in gutters (Visible on wider screen viewports, absolute/fixed positioned to prevent squishing) */}
+      <div className="hidden xl:flex fixed right-4 top-28 w-44 flex-col items-center justify-center space-y-2 z-30">
+        <div className="glass-panel p-3 rounded-2xl border border-white/10 bg-[#0d0917]/70 backdrop-blur-md shadow-2xl flex flex-col items-center">
+          <AdsterraAd type="BANNER_160X300" />
+          <span className="text-[8px] text-zinc-500 font-mono uppercase tracking-wider text-center mt-1 block">Sponsored</span>
+        </div>
+      </div>
+
+      <div className="hidden 3xl:flex fixed left-4 top-28 w-44 flex-col items-center justify-center space-y-2 z-30">
+        <div className="glass-panel p-3 rounded-2xl border border-white/10 bg-[#0d0917]/70 backdrop-blur-md shadow-2xl flex flex-col items-center">
+          <AdsterraAd type="BANNER_160X600" />
+          <span className="text-[8px] text-zinc-500 font-mono uppercase tracking-wider text-center mt-1 block">Sponsored</span>
         </div>
       </div>
 
