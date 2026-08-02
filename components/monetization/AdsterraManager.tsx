@@ -25,8 +25,15 @@ export default function AdsterraManager() {
 
     const handleGlobalClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      // Skip click count increment for navigation links, header elements, buttons or anchors
-      const isNavLink = target.closest('header') || target.closest('a') || target.closest('button');
+      // Skip click count increment for navigation, headers, buttons, anchors, and media grid card posts
+      const isNavLink = 
+        target.closest('header') || 
+        target.closest('a') || 
+        target.closest('button') ||
+        target.closest('.masonry-item') ||
+        target.closest('.glass-card') ||
+        target.closest('.glass-panel') ||
+        target.closest('[role="dialog"]');
       if (isNavLink) return;
 
       clickCount += 1;
